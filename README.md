@@ -1,4 +1,4 @@
-# Volunteer & Charity Platform — Team Purple
+# Volunteer & Charity Platform (Team Purple)
 Platform untuk mengelola kegiatan sosial (event), relawan, dan donasi.
 
 ## Tim
