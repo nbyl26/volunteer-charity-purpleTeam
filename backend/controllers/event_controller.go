@@ -1,0 +1,138 @@
+package controllers
+
+import (
+	"time"
+	"backend/database"
+	"backend/models"
+	"backend/utils"
+
+	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
+)
+
+type EventInput struct {
+	Title       string    `json:"title" validate:"required,min=5"`
+	Description string    `json:"description" validate:"required"`
+	Location    string    `json:"location" validate:"required"`
+	EventDate   time.Time `json:"event_date" validate:"required"`
+}
+
+
+func CreateEvent(c *fiber.Ctx) error {
+	var input EventInput
+	if err := utils.ParseAndValidate(c, &input); err != nil {
+		return err
+	}
+
+	event := models.Event{
+		Title:       input.Title,
+		Description: input.Description,
+		Location:    input.Location,
+		EventDate:   input.EventDate,
+	}
+
+	if err := database.DB.Create(&event).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(event)
+}
+
+func GetEvents(c *fiber.Ctx) error {
+	var events []models.Event
+	if err := database.DB.Find(&events).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.Status(fiber.StatusOK).JSON(events)
+}
+
+func GetEventByID(c *fiber.Ctx) error {
+	id := c.Params("id")
+	var event models.Event
+
+	err := database.DB.Preload("Registrations.User").First(&event, id).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Event not found"})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(event)
+}
+
+func UpdateEvent(c *fiber.Ctx) error {
+	id := c.Params("id")
+	var event models.Event
+	if err := database.DB.First(&event, id).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Event not found"})
+	}
+
+	var input EventInput
+	if err := utils.ParseAndValidate(c, &input); err != nil {
+		return err
+	}
+
+	database.DB.Model(&event).Updates(input)
+	return c.Status(fiber.StatusOK).JSON(event)
+}
+
+func DeleteEvent(c *fiber.Ctx) error {
+	id := c.Params("id")
+	result := database.DB.Delete(&models.Event{}, id)
+
+	if result.Error != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": result.Error.Error()})
+	}
+	if result.RowsAffected == 0 {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Event not found"})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "Event deleted successfully"})
+}
+
+
+func JoinEvent(c *fiber.Ctx) error {
+	userID := uint(c.Locals("userID").(float64))
+	eventID := c.Params("id")
+
+	var event models.Event
+	if err := database.DB.First(&event, eventID).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Event not found"})
+	}
+	
+	var existingReg models.EventRegistration
+	err := database.DB.Where("user_id = ? AND event_id = ?", userID, eventID).First(&existingReg).Error
+	if err == nil {
+		return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "You are already registered for this event"})
+	}
+
+	registration := models.EventRegistration{
+		UserID:  userID,
+		EventID: event.ID,
+		Status:  models.RegStatusPending,
+	}
+
+	if err := database.DB.Create(&registration).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(registration)
+}
+
+func ApproveVolunteer(c *fiber.Ctx) error {
+	volunteerID := c.Params("volunteerId")
+	regID := c.Params("regId")
+
+	var registration models.EventRegistration
+	err := database.DB.Where("id = ? AND user_id = ?", regID, volunteerID).First(&registration).Error
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Registration not found"})
+	}
+	
+	if err := database.DB.Model(&registration).Update("status", models.RegStatusApproved).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(registration)
+}
