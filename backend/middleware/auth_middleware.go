@@ -23,14 +23,19 @@ func AuthMiddleware() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		cfg := config.GetConfig()
 
+		tokenString := c.Cookies("access_token")
+
 		authHeader := c.Get("Authorization")
-		if authHeader == "" {
+		if tokenString == "" && strings.HasPrefix(authHeader, "Bearer ") {
+			tokenString = strings.TrimPrefix(authHeader, "Bearer ")
+		}
+
+		if tokenString == "" {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-				"error": "Authorization header required",
+				"error": "Access token not found in cookie",
 			})
 		}
 
-		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 		token, err := validateToken(tokenString, cfg.AccessSecret)
 
 		if err != nil || !token.Valid {

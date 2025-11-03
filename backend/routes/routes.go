@@ -10,56 +10,68 @@ import (
 )
 
 func SetupRoutes(app *fiber.App, db *gorm.DB) {
+
+	api := app.Group("/api")
+
+	// Public Routes
 	{
-		app.Post("/contact", controllers.SendContactEmail)
+		api.Post("/contact", controllers.SendContactEmail)
 	}
 
 	{
-		auth := app.Group("/auth")
+		auth := api.Group("/auth")
 		auth.Post("/register", controllers.Register)
 		auth.Post("/login", controllers.Login)
 		auth.Post("/refresh", controllers.RefreshToken)
+		auth.Post("/logout", controllers.Logout)
 
-		app.Get("/events", controllers.GetEvents)
-		app.Get("/events/:id", controllers.GetEventByID)
-		app.Get("/campaigns", controllers.GetCampaigns)
-		app.Get("/campaigns/:id", controllers.GetCampaignByID)
+		api.Get("/events", controllers.GetEvents)
+		api.Get("/events/:id", controllers.GetEventByID)
+		api.Get("/campaigns", controllers.GetCampaigns)
+		api.Get("/campaigns/:id", controllers.GetCampaignByID)
 	}
 
+	// Authenticated Routes
 	{
-		app.Get("/auth/me", middleware.AuthMiddleware(), controllers.GetSelf)
+		api.Get("/auth/me", middleware.AuthMiddleware(), controllers.GetSelf)
 		
-		userGroup := app.Group("/users")
+		userGroup := api.Group("/users")
 		userGroup.Get("/me", middleware.AuthMiddleware(), controllers.GetMyProfile)
 		userGroup.Patch("/me", middleware.AuthMiddleware(), controllers.UpdateMyProfile)
 	}
 
+	// User Routes
 	{
-		app.Post("/events/:id/join", middleware.AuthMiddleware(), middleware.RoleMiddleware(models.RoleVolunteer), controllers.JoinEvent)
+		api.Post("/events/:id/join", 
+			middleware.AuthMiddleware(), 
+			controllers.JoinEvent)
 		
-		app.Post("/upload/documentation/:regId", middleware.AuthMiddleware(), middleware.RoleMiddleware(models.RoleVolunteer), controllers.UploadVolunteerDocumentation)
+		api.Post("/upload/documentation/:regId", 
+			middleware.AuthMiddleware(), 
+			controllers.UploadVolunteerDocumentation)
+
+		api.Post("/campaigns/:id/donate", 
+			middleware.AuthMiddleware(),
+			controllers.CreateDonation)
 	}
 
-	{
-		app.Post("/campaigns/:id/donate", middleware.AuthMiddleware(), middleware.RoleMiddleware(models.RoleDonatur), controllers.CreateDonation)
-	}
-
+	// Admin Routes
 	adminMiddleware := []fiber.Handler{middleware.AuthMiddleware(), middleware.RoleMiddleware(models.RoleAdmin)}
 	{
-		eventAdmin := app.Group("/events", adminMiddleware...)
+		eventAdmin := api.Group("/events", adminMiddleware...)
 		eventAdmin.Post("/", controllers.CreateEvent)
 		eventAdmin.Put("/:id", controllers.UpdateEvent)
 		eventAdmin.Delete("/:id", controllers.DeleteEvent)
 		eventAdmin.Patch("/registrations/:regId/approve/:volunteerId", controllers.ApproveVolunteer)
 
-		campaignAdmin := app.Group("/campaigns", adminMiddleware...)
+		campaignAdmin := api.Group("/campaigns", adminMiddleware...)
 		campaignAdmin.Post("/", controllers.CreateCampaign)
 		campaignAdmin.Put("/:id", controllers.UpdateCampaign)
 		campaignAdmin.Delete("/:id", controllers.DeleteCampaign)
 
-		app.Patch("/donations/:id/verify", append(adminMiddleware, controllers.VerifyDonation)...)
+		api.Patch("/donations/:id/verify", append(adminMiddleware, controllers.VerifyDonation)...)
 		
-		userAdmin := app.Group("/users", adminMiddleware...)
+		userAdmin := api.Group("/users", adminMiddleware...)
 		userAdmin.Get("/", controllers.GetAllUsers)
 		userAdmin.Get("/:id", controllers.GetUserByID)
 	}

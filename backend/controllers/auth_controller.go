@@ -18,7 +18,6 @@ type RegisterInput struct {
 	Name     string      `json:"name" validate:"required,min=3"`
 	Email    string      `json:"email" validate:"required,email"`
 	Password string      `json:"password" validate:"required,min=6"`
-	Role     models.Role `json:"role" validate:"required,oneof=volunteer donatur"`
 }
 
 type LoginInput struct {
@@ -57,7 +56,7 @@ func Register(c *fiber.Ctx) error {
 		Name:     input.Name,
 		Email:    input.Email,
 		Password: string(hashedPassword),
-		Role:     input.Role, 
+		Role:     models.RoleUser, 
 	}
 
 	result := database.DB.Create(&user)
@@ -103,22 +102,66 @@ func Login(c *fiber.Ctx) error {
 		})
 	}
 
+	cfg := config.GetConfig()
+
+	c.Cookie(&fiber.Cookie{
+		Name:     "access_token",
+		Value:    accessToken,
+		Expires:  time.Now().Add(cfg.TokenExpiresIn),
+		HTTPOnly: true,
+		SameSite: "Strict",
+		Path:     "/",
+		// Secure: true,
+	})
+
+	c.Cookie(&fiber.Cookie{
+		Name:     "refresh_token",
+		Value:    refreshToken,
+		Expires:  time.Now().Add(time.Hour * 24 * 7),
+		HTTPOnly: true,
+		SameSite: "Strict",
+		Path:     "/api/auth",
+		// Secure: true,
+	})
+
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message":       "Login successful",
-		"access_token":  accessToken,
-		"refresh_token": refreshToken,
+		"message": "Login successful",
+	})
+}
+
+func Logout(c *fiber.Ctx) error {
+	c.Cookie(&fiber.Cookie{
+		Name:     "access_token",
+		Value:    "",
+		Expires:  time.Now().Add(-time.Hour),
+		HTTPOnly: true,
+		SameSite: "Strict",
+		Path:     "/",
+	})
+
+	c.Cookie(&fiber.Cookie{
+		Name:     "refresh_token",
+		Value:    "",
+		Expires:  time.Now().Add(-time.Hour),
+		HTTPOnly: true,
+		SameSite: "Strict",
+		Path:     "/api/auth",
+	})
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "Logged out successfully",
 	})
 }
 
 func RefreshToken(c *fiber.Ctx) error {
-	var input RefreshInput
 	cfg := config.GetConfig()
-	
-	if err := utils.ParseAndValidate(c, &input); err != nil {
-		return err
+
+	refreshTokenString := c.Cookies("refresh_token")
+	if refreshTokenString == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Refresh token not found in cookie"})
 	}
 
-	token, err := jwt.Parse(input.RefreshToken, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.Parse(refreshTokenString, func(token *jwt.Token) (interface{}, error) {
 		return []byte(cfg.RefreshSecret), nil
 	})
 
@@ -143,8 +186,18 @@ func RefreshToken(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to generate access token"})
 	}
 
+	c.Cookie(&fiber.Cookie{
+		Name:     "access_token",
+		Value:    accessToken,
+		Expires:  time.Now().Add(cfg.TokenExpiresIn),
+		HTTPOnly: true,
+		SameSite: "Strict",
+		Path:     "/",
+		// Secure: true,
+	})
+
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"access_token": accessToken,
+		"message": "Token refreshed",
 	})
 }
 
