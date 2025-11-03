@@ -11,6 +11,10 @@ import (
 
 func SetupRoutes(app *fiber.App, db *gorm.DB) {
 	{
+		app.Post("/contact", controllers.SendContactEmail)
+	}
+
+	{
 		auth := app.Group("/auth")
 		auth.Post("/register", controllers.Register)
 		auth.Post("/login", controllers.Login)
