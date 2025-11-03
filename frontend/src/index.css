@@ -1,0 +1,60 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Inter:wght@300;400;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base overrides */
+@layer base {
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-neutralLight text-neutralDark font-sans;
+    font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: 'Poppins', ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto;
+  }
+
+  a {
+    @apply text-primary hover:underline;
+  }
+}
+
+/* Reusable components */
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center rounded-lg font-semibold transition-shadow focus:outline-none focus:ring-2 focus:ring-offset-2;
+  }
+
+  .btn-primary {
+    @apply btn px-5 py-2 bg-primary text-white hover:bg-opacity-95 focus:ring-primary/50;
+  }
+
+  .btn-outline {
+    @apply btn px-5 py-2 border border-primary text-primary bg-white hover:bg-primary/5 focus:ring-primary/50;
+  }
+
+  .card {
+    @apply bg-white rounded-2xl shadow-md p-6;
+  }
+}
+
+/* Utilities example */
+@layer utilities {
+  .text-brand {
+    color: theme('colors.primary');
+  }
+}
+
