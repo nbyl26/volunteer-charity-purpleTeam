@@ -67,8 +67,13 @@ func CreateDonation(c *fiber.Ctx) error {
 	if err := database.DB.Create(&donation).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
-
-	return c.Status(fiber.StatusCreated).JSON(donation)
+	
+	var createdDonation models.Donation
+	if err := database.DB.Preload("User").Preload("Campaign").First(&createdDonation, donation.ID).Error; err != nil {
+		return c.Status(fiber.StatusCreated).JSON(donation)
+	}
+	
+	return c.Status(fiber.StatusCreated).JSON(createdDonation)
 }
 
 func VerifyDonation(c *fiber.Ctx) error {
