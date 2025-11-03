@@ -1,9 +1,60 @@
-import React from "react";
+import React, { useState } from "react";
 import { Mail, Phone, MapPin, Send } from "lucide-react";
 import { motion } from "framer-motion";
 import bgGlobe from "../assets/bg-hero.svg";
+import { API_ENDPOINTS } from "../config/api";
 
 export default function Contact() {
+    const [formData, setFormData] = useState({
+        name: "",
+        email: "",
+        message: "",
+    });
+    const [status, setStatus] = useState({ type: "", message: "" });
+    const [loading, setLoading] = useState(false);
+
+    const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        setStatus({ type: "", message: "" });
+
+        try {
+            const response = await fetch(API_ENDPOINTS.CONTACT, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(formData),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                setStatus({
+                    type: "success",
+                    message: data.message || "Pesan berhasil dikirim!",
+                });
+                setFormData({ name: "", email: "", message: "" });
+            } else {
+                setStatus({
+                    type: "error",
+                    message: data.error || "Gagal mengirim pesan. Silakan coba lagi.",
+                });
+            }
+        } catch (error) {
+            setStatus({
+                type: "error",
+                message: "Terjadi kesalahan. Silakan coba lagi nanti.",
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <section className="relative bg-white text-gray-800 min-h-screen overflow-hidden">
             {/* Background Decorative */}
@@ -77,13 +128,30 @@ export default function Contact() {
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.3, duration: 0.6 }}
                         className="bg-white rounded-2xl border border-gray-100 shadow-md p-8 space-y-6"
+                        onSubmit={handleSubmit}
                     >
+                        {/* Status Message */}
+                        {status.message && (
+                            <div
+                                className={`p-4 rounded-lg text-sm ${
+                                    status.type === "success"
+                                        ? "bg-green-50 text-green-700 border border-green-200"
+                                        : "bg-red-50 text-red-700 border border-red-200"
+                                }`}
+                            >
+                                {status.message}
+                            </div>
+                        )}
+
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Nama Lengkap
                             </label>
                             <input
                                 type="text"
+                                name="name"
+                                value={formData.name}
+                                onChange={handleChange}
                                 placeholder="Nama Anda"
                                 className="w-full border border-gray-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-purple-300 outline-none"
                                 required
@@ -96,6 +164,9 @@ export default function Contact() {
                             </label>
                             <input
                                 type="email"
+                                name="email"
+                                value={formData.email}
+                                onChange={handleChange}
                                 placeholder="contoh@email.com"
                                 className="w-full border border-gray-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-purple-300 outline-none"
                                 required
@@ -107,6 +178,9 @@ export default function Contact() {
                                 Pesan
                             </label>
                             <textarea
+                                name="message"
+                                value={formData.message}
+                                onChange={handleChange}
                                 placeholder="Tulis pesan Anda..."
                                 rows="5"
                                 className="w-full border border-gray-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-purple-300 outline-none resize-none"
@@ -116,9 +190,14 @@ export default function Contact() {
 
                         <button
                             type="submit"
-                            className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 rounded-xl flex items-center justify-center gap-2 transition-colors duration-200"
+                            disabled={loading}
+                            className={`w-full font-medium py-3 rounded-xl flex items-center justify-center gap-2 transition-colors duration-200 ${
+                                loading
+                                    ? "bg-purple-400 cursor-not-allowed text-white"
+                                    : "bg-purple-600 hover:bg-purple-700 text-white"
+                            }`}
                         >
-                            Kirim Pesan
+                            {loading ? "Mengirim..." : "Kirim Pesan"}
                             <Send className="w-4 h-4" />
                         </button>
                     </motion.form>
