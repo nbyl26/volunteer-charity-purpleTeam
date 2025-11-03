@@ -116,8 +116,13 @@ func JoinEvent(c *fiber.Ctx) error {
 	if err := database.DB.Create(&registration).Error; err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
-
-	return c.Status(fiber.StatusCreated).JSON(registration)
+	
+	var createdReg models.EventRegistration
+	if err := database.DB.Preload("User").Preload("Event").First(&createdReg, registration.ID).Error; err != nil {
+		return c.Status(fiber.StatusCreated).JSON(registration)
+	}
+	
+	return c.Status(fiber.StatusCreated).JSON(createdReg)
 }
 
 func ApproveVolunteer(c *fiber.Ctx) error {
