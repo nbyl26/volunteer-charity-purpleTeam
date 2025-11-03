@@ -75,7 +75,7 @@ PurpleCare memiliki tampilan antarmuka modern dan intuitif, dengan struktur hala
 
 ## ⚙️ Tech Stack
 
-
+```
 | **Frontend Framework** | [React.js (Vite)](https://vitejs.dev/) |
 | **Styling** | [Tailwind CSS](https://tailwindcss.com/) |
 | **Icons** | [lucide-react](https://lucide.dev/) |
@@ -85,11 +85,12 @@ PurpleCare memiliki tampilan antarmuka modern dan intuitif, dengan struktur hala
 | **Image Assets** | SVG custom + Unsplash placeholders |
 | **Font** | Poppins (Heading) & Inter (Body) |
 | **Design System** | Clean, minimal, accessible, soft-rounded UI (Tailwind utility classes) |
-
+```
 ---
 
 ## 🧩 Folder Structure
 
+```
 src/
 │
 ├── assets/ # Gambar, ikon, ilustrasi, QR Code
@@ -101,12 +102,13 @@ src/
 ├── pages/ # Semua halaman utama (Home, Login, Register, Events, dsb)
 ├── App.jsx # Root komponen utama
 └── main.jsx # Entry point aplikasi
-
+```
 
 ---
 
 ## 🚀 Fitur Utama (Frontend)
 
+```
 | **Landing Page Dinamis** | Hero, About Us, Get Involved, Events, Impact, dan Contact |
 | **Event Listing & Detail** | Menampilkan daftar event sosial dan detail tiap kegiatan |
 | **Volunteer Registration** | Form interaktif untuk pendaftaran volunteer berdasarkan event |
@@ -115,11 +117,12 @@ src/
 | **UI/UX Modern & Responsif** | Menggunakan Tailwind + Framer Motion untuk animasi halus |
 | **Theming Consistent** | Warna utama: Purple (#6C4AB6), Coral (#FF6F61), Accent Hijau Soft (#34D399) |
 | **Fully Responsive** | Desain adaptif untuk mobile, tablet, dan desktop |
-
+```
 ---
 
 ## 🧠 User Flow (ringkas)
 
+```
 Landing Page
 ↓
 Events Page
@@ -127,7 +130,7 @@ Events Page
 Event Detail
 ├── Join as Volunteer → JoinEvent Page
 └── Donate Now → Donate Page
-
+```
 
 ---
 
