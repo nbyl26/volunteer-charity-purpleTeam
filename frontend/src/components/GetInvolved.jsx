@@ -1,6 +1,8 @@
 import { HeartHandshake, HandCoins } from "lucide-react";
 import bgGlobe from "../assets/bg-globe.svg";
 
+import { Link } from "react-router-dom";
+
 export default function GetInvolved() {
     return (
         <section className="relative bg-white py-24 overflow-hidden">
@@ -35,9 +37,13 @@ export default function GetInvolved() {
                                     Dukung kami secara finansial dengan berdonasi untuk tujuan mulia kami.
                                     Donasi Anda akan membantu kami menciptakan perbedaan nyata di lebih banyak komunitas.
                                 </p>
-                                <button className="mt-2 text-purple-600 font-medium hover:underline">
+
+                                <Link
+                                    to="/events"
+                                    className="mt-2 text-purple-600 font-medium hover:underline block"
+                                >
                                     Donasi Sekarang →
-                                </button>
+                                </Link>
                             </div>
                         </div>
 
@@ -54,9 +60,13 @@ export default function GetInvolved() {
                                     Bergabunglah sebagai relawan dan bantu kami menyebarkan kebaikan
                                     serta memperkuat komunitas.
                                 </p>
-                                <button className="mt-2 text-purple-600 font-medium hover:underline">
+
+                                <Link
+                                    to="/events"
+                                    className="mt-2 text-purple-600 font-medium hover:underline block"
+                                >
                                     Daftar Relawan →
-                                </button>
+                                </Link>
                             </div>
                         </div>
                     </div>
