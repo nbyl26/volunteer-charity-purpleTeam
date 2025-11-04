@@ -99,7 +99,7 @@ export default function Contact() {
                             <ul className="space-y-4">
                                 <li className="flex items-center gap-4 text-gray-700">
                                     <Mail className="text-purple-600 w-5 h-5" />
-                                    <span>purpleTeam@gmail.com</span>
+                                    <span>purplecare01@gmail.com</span>
                                 </li>
                                 <li className="flex items-center gap-4 text-gray-700">
                                     <Phone className="text-purple-600 w-5 h-5" />
