@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"path/filepath"
 	"strconv"
 
 	"backend/database"
@@ -9,30 +8,11 @@ import (
 	"backend/utils"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type VerifyDonationInput struct {
 	Status models.DonationStatus `json:"status" validate:"required,oneof=verified rejected"`
-}
-
-func saveFile(c *fiber.Ctx, fieldName string) (string, error) {
-	file, err := c.FormFile(fieldName)
-	if err != nil {
-		return "", err
-	}
-
-	ext := filepath.Ext(file.Filename)
-	newFilename := uuid.New().String() + ext
-	dst := filepath.Join("./uploads", newFilename)
-
-	if err := c.SaveFile(file, dst); err != nil {
-		return "", err
-	}
-	
-	fileUrl := "/files/" + newFilename
-	return fileUrl, nil
 }
 
 
@@ -51,7 +31,7 @@ func CreateDonation(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Campaign not found"})
 	}
 
-	fileUrl, err := saveFile(c, "proof_of_payment")
+	fileUrl, err := utils.SaveFile(c, "proof_of_payment", "./uploads")
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "File upload failed: " + err.Error()})
 	}
