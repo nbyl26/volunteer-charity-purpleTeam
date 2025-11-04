@@ -14,7 +14,7 @@ import (
 
 func main() {
 	database.InitDB()
-	
+
 	database.MigrateDB(database.DB)
 
 	config.LoadConfig()
@@ -24,9 +24,11 @@ func main() {
 
 	app.Use(logger.New())
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: "*",
-		AllowHeaders: "Origin, Content-Type, Accept, Authorization",
-		AllowMethods: "GET, POST, PUT, PATCH, DELETE",
+		AllowOrigins:     "http://localhost:5173", 
+		AllowMethods:     "GET,POST,PUT,PATCH,DELETE,OPTIONS",
+		AllowHeaders:     "Origin, Content-Type, Accept, Authorization",
+		ExposeHeaders:    "Set-Cookie",
+		AllowCredentials: true, 
 	}))
 
 	app.Static("/files", "./uploads")
@@ -39,6 +41,6 @@ func main() {
 		})
 	})
 
-	log.Println("Starting server on port:", cfg.Port)
+	log.Println("🚀 Starting server on port:", cfg.Port)
 	log.Fatal(app.Listen(":" + cfg.Port))
 }
