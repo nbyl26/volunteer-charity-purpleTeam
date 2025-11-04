@@ -1,6 +1,8 @@
 import { ArrowRight } from "lucide-react";
 import bgGlobe from "../assets/bg-hero.svg";
 
+import { Link } from "react-router-dom";
+
 import Event1 from "../assets/event1.jpg";
 import Event2 from "../assets/event2.jpg";
 import Event3 from "../assets/event3.jpg";
@@ -62,9 +64,17 @@ export default function Events() {
                             Dapatkan informasi terbaru mengenai aktivitas, acara, dan program
                             kerelawanan kami yang menciptakan dampak nyata.
                         </p>
-                        <button className="inline-flex items-center gap-2 px-5 py-2.5 border border-purple-600 text-purple-600 rounded-lg hover:bg-purple-50 transition font-medium">
+                        {/* <button className="inline-flex items-center gap-2 px-5 py-2.5 border border-purple-600 text-purple-600 rounded-lg hover:bg-purple-50 transition font-medium">
                             Lihat Semua Acara <ArrowRight className="w-4 h-4" />
-                        </button>
+                        </button> */}
+
+                        <Link
+                            to="/events"
+                            className="inline-flex items-center gap-2 px-5 py-2.5 border border-purple-600 text-purple-600 rounded-lg hover:bg-purple-50 transition font-medium"
+                        >
+                            Lihat Semua Acara →
+                        </Link>
+
                     </div>
                 </div>
 
