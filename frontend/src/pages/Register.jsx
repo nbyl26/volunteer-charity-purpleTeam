@@ -18,23 +18,22 @@ export default function Register() {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
-    const handleRegister = (e) => {
+    const handleRegister = async (e) => {
         e.preventDefault();
         setError("");
         setLoading(true);
 
-        const fullName = `${form.firstName} ${form.lastName}`;
-        const res = register(fullName, form.email, form.password);
+        const fullName = `${form.firstName.trim()} ${form.lastName.trim()}`;
 
-        setTimeout(() => {
+        try {
+            await register(fullName, form.email, form.password);
+            navigate("/login");
+        } catch (err) {
+            console.error("Register error:", err);
+            setError("Gagal mendaftar. Email mungkin sudah digunakan.");
+        } finally {
             setLoading(false);
-
-            if (res.success) {
-                navigate("/dashboard");
-            } else {
-                setError(res.message);
-            }
-        }, 600);
+        }
     };
 
     return (
@@ -54,15 +53,6 @@ export default function Register() {
                 )}
 
                 <div className="flex gap-3">
-                    {/* <AuthInput
-                        label="Nama Lengkap"
-                        type="text"
-                        name="firstName"
-                        placeholder="Mas Fuad"
-                        required
-                        value={form.firstName}
-                        onChange={(e) => setForm({ ...form, firstName: e.target.value })}
-                    /> */}
                     <AuthInput
                         label="Nama Depan"
                         type="text"
@@ -70,7 +60,9 @@ export default function Register() {
                         placeholder="Mas"
                         required
                         value={form.firstName}
-                        onChange={(e) => setForm({ ...form, firstName: e.target.value })}
+                        onChange={(e) => {
+                            setForm({ ...form, firstName: e.target.value })
+                        }}
                     />
                     <AuthInput
                         label="Nama Belakang"
@@ -79,7 +71,9 @@ export default function Register() {
                         placeholder="Fuad"
                         required
                         value={form.lastName}
-                        onChange={(e) => setForm({ ...form, lastName: e.target.value })}
+                        onChange={(e) =>
+                            setForm({ ...form, lastName: e.target.value })
+                        }
                     />
                 </div>
 
@@ -90,7 +84,9 @@ export default function Register() {
                     placeholder="anda@contoh.com"
                     required
                     value={form.email}
-                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    onChange={(e) =>
+                        setForm({ ...form, email: e.target.value })
+                    }
                 />
 
                 <AuthInput
@@ -100,7 +96,9 @@ export default function Register() {
                     placeholder="********"
                     required
                     value={form.password}
-                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                    onChange={(e) =>
+                        setForm({ ...form, password: e.target.value })
+                    }
                 />
 
                 <div className="flex items-center gap-2 mb-4 text-sm">

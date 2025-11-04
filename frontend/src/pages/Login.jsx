@@ -13,22 +13,20 @@ export default function Login() {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
-    const handleLogin = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
         setError("");
         setLoading(true);
 
-        const res = login(form.email, form.password);
-
-        setTimeout(() => {
+        try {
+            await login(form.email, form.password);
+            navigate("/dashboard");
+        } catch (err) {
+            console.error("Login error:", err);
+            setError("Email atau password salah.");
+        } finally {
             setLoading(false);
-
-            if (res.success) {
-                navigate("/dashboard");
-            } else {
-                setError(res.message);
-            }
-        }, 600);
+        }
     };
 
     return (
@@ -37,7 +35,8 @@ export default function Login() {
             subtitle="Masuk untuk melanjutkan perjalanan Anda dengan PurpleCare"
             quote={{
                 title: "Menghubungkan Hati, Memberdayakan Perubahan",
-                subtitle: "Bergabunglah dengan ribuan relawan yang membuat perubahan setiap hari.",
+                subtitle:
+                    "Bergabunglah dengan ribuan relawan yang membuat perubahan setiap hari.",
             }}
         >
             <form onSubmit={handleLogin}>
@@ -54,7 +53,9 @@ export default function Login() {
                     placeholder="test@gmail.com"
                     required
                     value={form.email}
-                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    onChange={(e) =>
+                        setForm({ ...form, email: e.target.value })
+                    }
                 />
 
                 <AuthInput
@@ -64,7 +65,9 @@ export default function Login() {
                     placeholder="********"
                     required
                     value={form.password}
-                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                    onChange={(e) =>
+                        setForm({ ...form, password: e.target.value })
+                    }
                 />
 
                 <div className="text-right mb-4">
@@ -80,8 +83,8 @@ export default function Login() {
                     type="submit"
                     disabled={loading}
                     className={`w-full py-2 rounded-xl font-semibold text-white transition ${loading
-                        ? "bg-purple-400 cursor-not-allowed"
-                        : "bg-purple-600 hover:bg-purple-700"
+                            ? "bg-purple-400 cursor-not-allowed"
+                            : "bg-purple-600 hover:bg-purple-700"
                         }`}
                 >
                     {loading ? "Sedang masuk..." : "Masuk"}

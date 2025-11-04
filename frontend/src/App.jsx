@@ -34,11 +34,41 @@ function LayoutWrapper({ children }) {
 }
 
 function PrivateRoute({ children, adminOnly = false }) {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-600"></div>
+      </div>
+    );
+  }
 
   if (!user) return <Navigate to="/login" />;
+
   if (adminOnly && user.role !== "admin") return <Navigate to="/" />;
 
+  return children;
+}
+
+function AuthRoute({ children }) {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-600"></div>
+      </div>
+    );
+  }
+
+  if (user) {
+    if (user.role === "admin") {
+      return <Navigate to="/admin" />;
+    }
+    return <Navigate to="/dashboard" />;
+  }
+    
   return children;
 }
 
@@ -54,15 +84,64 @@ function App() {
             <Route path="/events" element={<Events />} />
             <Route path="/events/:id" element={<EventDetail />} />
             <Route path="/contact" element={<Contact />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/admin" element={<AdminPanel />} />
-            <Route path="/donate" element={<Donate />} />
-            <Route path="/join-event" element={<JoinEvent />} />
-            <Route path="/join-event/:id" element={<JoinEvent />} />
-            <Route path="/donate/:id" element={<Donate />} />
+            <Route
+              path="/login"
+              element={
+                <AuthRoute>
+                  <Login />
+                </AuthRoute>
+              }
+            />
+            <Route
+              path="/register"
+              element={
+                <AuthRoute>
+                  <Register />
+                </AuthRoute>
+              }
+            />
+            <Route
+              path="/forgot-password"
+              element={
+                <AuthRoute>
+                  <ForgotPassword />
+                </AuthRoute>
+              }
+            />
+            <Route
+              path="/donate"
+              element={
+                <PrivateRoute>
+                  <Donate />
+                </PrivateRoute>
+              }
+            />
 
+            <Route
+              path="/join-event"
+              element={
+                <PrivateRoute>
+                  <JoinEvent />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/join-event/:id"
+              element={
+                <PrivateRoute>
+                  <JoinEvent />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/donate/:id"
+              element={
+                <PrivateRoute>
+                  <Donate />
+                </PrivateRoute>
+              }
+            />
+            
             <Route
               path="/dashboard"
               element={
@@ -71,35 +150,14 @@ function App() {
                 </PrivateRoute>
               }
             />
-            {/* <Route
+            <Route
               path="/admin"
               element={
                 <PrivateRoute adminOnly>
                   <AdminPanel />
                 </PrivateRoute>
               }
-            /> */}
-
-            {/* <Route
-              path="/donate"
-              element={
-                <PrivateRoute>
-                  <Donate />
-                </PrivateRoute>
-              }   
-            /> */}
-
-            {/* <Route path="/join-event" element={<PrivateRoute><JoinEvent /></PrivateRoute>} />
-            <Route
-              path="/join-event/:id"
-              element={
-                <PrivateRoute>
-                  <JoinEvent />
-                </PrivateRoute>
-              }
-            /> */}
-
-
+            />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </LayoutWrapper>

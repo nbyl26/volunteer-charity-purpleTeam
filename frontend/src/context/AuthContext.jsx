@@ -1,57 +1,68 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
+import api from "../config/api";
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const stored = localStorage.getItem("purplecare_user");
-        if (stored) setUser(JSON.parse(stored));
+        const fetchUser = async () => {
+            try {
+                const res = await api.get("/auth/me");
+                setUser(res.data);
+            } catch (error) {
+                console.log("No valid session found");
+                setUser(null);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchUser();
     }, []);
 
-    const USERS = [
-        { email: "admin@purplecare.com", password: "admin", role: "admin", name: "Admin PurpleCare" },
-        { email: "user@purplecare.com", password: "user123", role: "user", name: "John Doe" },
-    ];
-
-    const login = (email, password) => {
-        const found = USERS.find((u) => u.email === email && u.password === password);
-        if (!found) return { success: false, message: "Email atau kata sandi tidak valid." };
-
-        setUser(found);
-        localStorage.setItem("purplecare_user", JSON.stringify(found));
-        return { success: true };
+    const login = async (email, password) => {
+        const res = await api.post("/auth/login", { email, password });
+        if (res.status === 200) {
+            const me = await api.get("/auth/me");
+            if (me && me.data) {
+                const fullName = (me.data.name || "").trim();
+                if (!fullName) {
+                    me.data.firstName = "";
+                    me.data.lastName = "";
+                } else {
+                    const parts = fullName.split(/\s+/);
+                    me.data.firstName = parts[0] || "";
+                    me.data.lastName = parts.length > 1 ? parts.slice(1).join(" ") : "";
+                }
+                setUser(me.data);
+                return { success: true, user: me.data };
+            }
+        }
+        return { success: false, message: "Login gagal" };
     };
 
-    const register = (name, email, password) => {
-        const exists = USERS.find((u) => u.email === email);
-        if (exists) return { success: false, message: "Email sudah terdaftar." };
-
-        const newUser = { name, email, password, role: "user" };
-        setUser(newUser);
-        localStorage.setItem("purplecare_user", JSON.stringify(newUser));
-        return { success: true };
+    const register = async (name, email, password) => {
+        const res = await api.post("/auth/register", { name, email, password });
+        if (res.status === 201) {
+            return { success: true };
+        }
+        return { success: false, message: "Registrasi gagal" };
     };
 
-    const logout = () => {
-        setUser(null);
-        localStorage.removeItem("purplecare_user");
-    };
-
-    const forgotPassword = (email) => {
-        const exists = USERS.find((u) => u.email === email);
-        if (!exists)
-            return { success: false, message: "Tidak ditemukan akun dengan email tersebut." };
-
-        return {
-            success: true,
-            message: "Tautan atur ulang kata sandi telah dikirim! (simulasi)",
-        };
+    const logout = async () => {
+        try {
+            await api.post("/auth/logout");
+        } catch (error) {
+            console.error("Logout error:", error);
+        } finally {
+            setUser(null);
+        }
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, register, logout, forgotPassword }}>
+        <AuthContext.Provider value={{ user, loading, login, register, logout }}>
             {children}
         </AuthContext.Provider>
     );
