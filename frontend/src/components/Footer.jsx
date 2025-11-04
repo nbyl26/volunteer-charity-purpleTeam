@@ -1,4 +1,4 @@
-import { Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
+import { Github, Instagram, Linkedin } from "lucide-react";
 import logo from "../assets/logo.png";
 
 export default function Footer() {
@@ -60,31 +60,31 @@ export default function Footer() {
                         Hubungi Kami
                     </h3>
                     <ul className="text-sm space-y-2 mb-4">
-                        <li>purpleTeam@gmail.com</li>
+                        <li>purplecare01@gmail.com</li>
                         <li>+62 812 3456 7890</li>
                     </ul>
                     <div className="flex space-x-4">
                         <a
-                            href="#"
+                            href="https://github.com/nbyl26"
                             className="bg-white text-purple-600 rounded-full p-2 hover:bg-purple-200 transition"
+                            target="_blank"
+                            rel="noopener noreferrer"
                         >
-                            <Facebook size={18} />
+                            <Github size={18} />
                         </a>
                         <a
-                            href="#"
+                            href="https://instagram.com/nbyl.26"
                             className="bg-white text-purple-600 rounded-full p-2 hover:bg-purple-200 transition"
-                        >
-                            <Twitter size={18} />
-                        </a>
-                        <a
-                            href="#"
-                            className="bg-white text-purple-600 rounded-full p-2 hover:bg-purple-200 transition"
+                            target="_blank"
+                            rel="noopener noreferrer"
                         >
                             <Instagram size={18} />
                         </a>
                         <a
-                            href="#"
+                            href="https://linkedin.com/in/nabilpasha"
                             className="bg-white text-purple-600 rounded-full p-2 hover:bg-purple-200 transition"
+                            target="_blank"
+                            rel="noopener noreferrer"
                         >
                             <Linkedin size={18} />
                         </a>
