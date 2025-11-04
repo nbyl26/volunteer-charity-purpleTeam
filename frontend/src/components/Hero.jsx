@@ -1,6 +1,8 @@
 import heroImage from "../assets/hero-img.jpg";
 import bgHero from "../assets/bg-hero.svg";
 
+import { Link } from "react-router-dom";
+
 export default function Hero() {
     return (
         <section className="relative bg-gray-10 pt-32 pb-20 overflow-hidden">
@@ -25,14 +27,13 @@ export default function Hero() {
                         di masyarakat. Mari bergabung bersama kami untuk mewujudkan perubahan.
                     </p>
 
-                    {/* Buttons */}
                     <div className="mt-8 flex flex-wrap gap-4">
-                        <button className="px-6 py-3 rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition">
+                        <Link
+                            to="/events"
+                            className="px-6 py-3 rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition"
+                        >
                             Mulai Sekarang
-                        </button>
-                        <button className="px-6 py-3 rounded-lg border border-purple-600 text-purple-600 hover:bg-purple-50 transition">
-                            Donasi
-                        </button>
+                        </Link>
                     </div>
 
                     {/* Stats */}
