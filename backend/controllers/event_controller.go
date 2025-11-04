@@ -15,13 +15,40 @@ type EventInput struct {
 	Description string    `json:"description" validate:"required"`
 	Location    string    `json:"location" validate:"required"`
 	EventDate   time.Time `json:"event_date" validate:"required"`
+	PhotoURL    string    `json:"photo_url" validate:"omitempty,url"`
+	Category    string    `json:"category" validate:"required"` 
 }
 
 
 func CreateEvent(c *fiber.Ctx) error {
-	var input EventInput
-	if err := utils.ParseAndValidate(c, &input); err != nil {
-		return err
+	eventDateStr := c.FormValue("event_date")
+	eventDate, err := time.Parse(time.RFC3339, eventDateStr)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Invalid event_date format. Use ISO 8601 (RFC3339).",
+		})
+	}
+
+	input := EventInput{
+		Title:       c.FormValue("title"),
+		Description: c.FormValue("description"),
+		Location:    c.FormValue("location"),
+		Category:    c.FormValue("category"),
+		EventDate:   eventDate,
+	}
+
+	if errors := utils.ValidateStruct(input); errors != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"errors": errors})
+	}
+
+	fileUrl, err := utils.SaveFile(c, "photo", "./uploads")
+	if err != nil {
+		if err == utils.ErrMissingFile {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "Event photo (field 'photo') is required.",
+			})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "File upload failed: " + err.Error()})
 	}
 
 	event := models.Event{
@@ -29,6 +56,8 @@ func CreateEvent(c *fiber.Ctx) error {
 		Description: input.Description,
 		Location:    input.Location,
 		EventDate:   input.EventDate,
+		Category:    input.Category,
+		PhotoURL:    fileUrl,
 	}
 
 	if err := database.DB.Create(&event).Error; err != nil {
