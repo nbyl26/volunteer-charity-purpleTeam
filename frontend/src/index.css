@@ -4,7 +4,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Base overrides */
 @layer base {
 
   html,
@@ -32,7 +31,6 @@
   }
 }
 
-/* Reusable components */
 @layer components {
   .btn {
     @apply inline-flex items-center justify-center rounded-lg font-semibold transition-shadow focus:outline-none focus:ring-2 focus:ring-offset-2;
@@ -51,10 +49,45 @@
   }
 }
 
-/* Utilities example */
 @layer utilities {
   .text-brand {
     color: theme('colors.primary');
   }
 }
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-out;
+}
+
+nav {
+  will-change: transform, box-shadow;
+}
+
+.overflow-y-auto::-webkit-scrollbar {
+  width: 6px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 10px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
