@@ -67,12 +67,24 @@ func CreateEvent(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(event)
 }
 
+// func GetEvents(c *fiber.Ctx) error {
+// 	var events []models.Event
+// 	if err := database.DB.Find(&events).Error; err != nil {
+// 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+// 	}
+// 	return c.Status(fiber.StatusOK).JSON(events)
+// }
+
 func GetEvents(c *fiber.Ctx) error {
-	var events []models.Event
-	if err := database.DB.Find(&events).Error; err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
-	}
-	return c.Status(fiber.StatusOK).JSON(events)
+    var events []models.Event
+    
+    if err := database.DB.
+        Preload("Registrations.User").
+        Find(&events).Error; err != nil {
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+    }
+    
+    return c.Status(fiber.StatusOK).JSON(events)
 }
 
 func GetEventByID(c *fiber.Ctx) error {
@@ -88,6 +100,22 @@ func GetEventByID(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(event)
+}
+
+// NEW
+func GetEventRegistrations(c *fiber.Ctx) error {
+    eventID := c.Params("id")
+    
+    var registrations []models.EventRegistration
+    
+    if err := database.DB.
+        Where("event_id = ?", eventID).
+        Preload("User").
+        Find(&registrations).Error; err != nil {
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+    }
+    
+    return c.Status(fiber.StatusOK).JSON(registrations)
 }
 
 func UpdateEvent(c *fiber.Ctx) error {
