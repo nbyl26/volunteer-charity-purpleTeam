@@ -12,7 +12,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type UserResponse struct {
+type SimpleUserResponse struct {
 	ID    uint   `json:"id"`
 	Name  string `json:"name"`
 	Email string `json:"email"`
@@ -29,7 +29,7 @@ type DonationResponse struct {
 	ProofOfPayment string            `json:"proof_of_payment"`
 	Status         models.DonationStatus `json:"status"`
 	CreatedAt      time.Time         `json:"created_at"`
-	User           UserResponse      `json:"user"`
+	User           SimpleUserResponse      `json:"user"`
 	Campaign       CampaignResponse  `json:"campaign"`
 }
 
@@ -48,9 +48,9 @@ func GetAllDonations(c *fiber.Ctx) error {
 
 	var response []DonationResponse
 	for _, donation := range donations {
-		userResp := UserResponse{}
+		userResp := SimpleUserResponse{}
 		if donation.User.ID != 0 {
-			userResp = UserResponse{
+			userResp = SimpleUserResponse{
 				ID:    donation.User.ID,
 				Name:  donation.User.Name,
 				Email: donation.User.Email,
