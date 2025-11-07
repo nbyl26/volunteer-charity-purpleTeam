@@ -72,7 +72,10 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 		campaignAdmin.Put("/:id", controllers.UpdateCampaign)
 		campaignAdmin.Delete("/:id", controllers.DeleteCampaign)
 
-		api.Patch("/donations/:id/verify", append(adminMiddleware, controllers.VerifyDonation)...)
+		donationAdmin := api.Group("/donations", adminMiddleware...)
+		donationAdmin.Get("/", controllers.GetAllDonations)
+		donationAdmin.Patch("/:id/verify", controllers.VerifyDonation)
+
 		
 		userAdmin := api.Group("/users", adminMiddleware...)
 		userAdmin.Get("/", controllers.GetAllUsers)
