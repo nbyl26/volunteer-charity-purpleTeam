@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"strconv"
+	"time"
 
 	"backend/database"
 	"backend/models"
@@ -11,10 +12,72 @@ import (
 	"gorm.io/gorm"
 )
 
+type UserResponse struct {
+	ID    uint   `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}
+
+type CampaignResponse struct {
+	ID    uint   `json:"id"`
+	Title string `json:"title"`
+}
+
+type DonationResponse struct {
+	ID             uint              `json:"id"`
+	Amount         float64           `json:"amount"`
+	ProofOfPayment string            `json:"proof_of_payment"`
+	Status         models.DonationStatus `json:"status"`
+	CreatedAt      time.Time         `json:"created_at"`
+	User           UserResponse      `json:"user"`
+	Campaign       CampaignResponse  `json:"campaign"`
+}
+
 type VerifyDonationInput struct {
 	Status models.DonationStatus `json:"status" validate:"required,oneof=verified rejected"`
 }
 
+func GetAllDonations(c *fiber.Ctx) error {
+	var donations []models.Donation
+
+	if err := database.DB.Preload("User").Preload("Campaign").Order("created_at desc").Find(&donations).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to retrieve donations",
+		})
+	}
+
+	var response []DonationResponse
+	for _, donation := range donations {
+		userResp := UserResponse{}
+		if donation.User.ID != 0 {
+			userResp = UserResponse{
+				ID:    donation.User.ID,
+				Name:  donation.User.Name,
+				Email: donation.User.Email,
+			}
+		}
+
+		campaignResp := CampaignResponse{}
+		if donation.Campaign.ID != 0 {
+			campaignResp = CampaignResponse{
+				ID:    donation.Campaign.ID,
+				Title: donation.Campaign.Title,
+			}
+		}
+
+		response = append(response, DonationResponse{
+			ID:             donation.ID,
+			Amount:         donation.Amount,
+			ProofOfPayment: donation.ProofOfPayment,
+			Status:         donation.Status,
+			CreatedAt:      donation.CreatedAt,
+			User:           userResp,
+			Campaign:       campaignResp,
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(response)
+}
 
 func CreateDonation(c *fiber.Ctx) error {
 	userID := uint(c.Locals("userID").(float64))
