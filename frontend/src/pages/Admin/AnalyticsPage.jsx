@@ -223,8 +223,7 @@ export default function AnalyticsPage() {
                                 Platform PurpleCare telah melayani <strong>{stats.totalUsers} pengguna</strong> dengan{" "}
                                 <strong>{stats.totalEvents} event</strong> dan{" "}
                                 <strong>{stats.totalCampaigns} campaign</strong>. Total donasi yang terkumpul mencapai{" "}
-                                <strong>{formatCurrency(stats.totalDonationAmount)}</strong> dari{" "}
-                                <strong>{stats.verifiedDonations} donasi terverifikasi</strong>.
+                                <strong>{formatCurrency(stats.totalDonationAmount)}</strong> 
                             </p>
                         </div>
                     </div>
