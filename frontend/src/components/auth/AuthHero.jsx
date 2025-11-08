@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
-import { Heart, Users, TrendingUp, Shield } from "lucide-react";
+import { Heart, Users, TrendingUp, Shield, Key, Lock } from "lucide-react";
 
-export default function AuthHero({ isLogin }) {
+export default function AuthHero({ isLogin, isForgotPassword }) {
     const loginContent = {
         title: "Selamat Datang Kembali!",
         subtitle: "Lanjutkan perjalanan kebaikan Anda bersama PurpleCare",
@@ -46,7 +46,33 @@ export default function AuthHero({ isLogin }) {
         ]
     };
 
-    const content = isLogin ? loginContent : registerContent;
+    const forgotPasswordContent = {
+        title: "Jangan Khawatir!",
+        subtitle: "Kami akan membantu Anda mendapatkan kembali akses ke akun",
+        features: [
+            {
+                icon: Lock,
+                title: "Keamanan Terjamin",
+                description: "Link reset password dikirim langsung ke email Anda"
+            },
+            {
+                icon: Key,
+                title: "Proses Mudah",
+                description: "Reset password dalam hitungan menit"
+            },
+            {
+                icon: Shield,
+                title: "Data Terlindungi",
+                description: "Informasi akun Anda tetap aman dan terenkripsi"
+            }
+        ]
+    };
+
+    const content = isForgotPassword 
+        ? forgotPasswordContent 
+        : isLogin 
+        ? loginContent 
+        : registerContent;
 
     return (
         <motion.div
