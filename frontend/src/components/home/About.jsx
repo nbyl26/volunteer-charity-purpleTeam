@@ -1,6 +1,6 @@
 import { Users, ShieldCheck, HeartHandshake } from "lucide-react";
-import aboutImage from "../assets/about-img.jpg";
-import bgGlobe from "../assets/bg-globe.svg";
+import aboutImage from "../../assets/about-img.jpg";
+import bgGlobe from "../../assets/bg-globe.svg";
 
 export default function About() {
     return (

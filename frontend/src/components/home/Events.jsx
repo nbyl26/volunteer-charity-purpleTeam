@@ -1,8 +1,8 @@
 import { ArrowRight } from "lucide-react";
-import bgGlobe from "../assets/bg-hero.svg";
+import bgGlobe from "../../assets/bg-hero.svg";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
-import api, { API_ENDPOINTS } from "../config/api";
+import api, { API_ENDPOINTS } from "../../config/api";
 import { Loader2 } from "lucide-react";
 
 export default function Events() {

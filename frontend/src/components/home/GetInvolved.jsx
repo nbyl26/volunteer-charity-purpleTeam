@@ -1,5 +1,5 @@
 import { HeartHandshake, HandCoins } from "lucide-react";
-import bgGlobe from "../assets/bg-globe.svg";
+import bgGlobe from "../../assets/bg-globe.svg";
 
 import { Link } from "react-router-dom";
 
