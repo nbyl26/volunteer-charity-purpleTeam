@@ -219,7 +219,10 @@ export default function Dashboard() {
                                     Lihat Semua →
                                 </button>
                             </div>
-                            <EventRegistrationList registrations={profile?.event_registrations} />
+                            <EventRegistrationList
+                                registrations={profile?.event_registrations}
+                                onUploadSuccess={fetchProfileData}
+                            />
                         </div>
 
                         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6">

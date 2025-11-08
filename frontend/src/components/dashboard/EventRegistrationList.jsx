@@ -1,14 +1,31 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
-import { Calendar } from "lucide-react";
+import { Calendar, MapPin, AlertCircle } from "lucide-react";
+import DocumentationUpload from "./DocumentationUpload";
 
-export default function EventRegistrationList({ registrations }) {
-    const navigate = useNavigate();
+export default function EventRegistrationList({ registrations, onUploadSuccess }) {
+    if (!registrations || registrations.length === 0) {
+        return (
+            <div className="text-center py-8 text-gray-500">
+                <AlertCircle className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+                <p className="text-sm">Belum ada pendaftaran event</p>
+            </div>
+        );
+    }
 
-    const formatDate = (isoString) => {
-        if (!isoString) return "-";
+    const getStatusBadge = (status) => {
+        const statusLower = (status || "").toLowerCase();
+        const badges = {
+            pending: "bg-yellow-100 text-yellow-800",
+            approved: "bg-green-100 text-green-800",
+            rejected: "bg-red-100 text-red-800",
+            selesai: "bg-blue-100 text-blue-800",
+        };
+        return badges[statusLower] || "bg-gray-100 text-gray-800";
+    };
+
+    const formatDate = (dateString) => {
+        if (!dateString) return "Tanggal tidak tersedia";
         try {
-            const date = new Date(isoString);
+            const date = new Date(dateString);
             return date.toLocaleDateString("id-ID", {
                 day: "numeric",
                 month: "long",
@@ -19,50 +36,54 @@ export default function EventRegistrationList({ registrations }) {
         }
     };
 
-    const statusConfig = {
-        pending: { color: "bg-yellow-100 text-yellow-700", label: "Pending" },
-        approved: { color: "bg-green-100 text-green-700", label: "Disetujui" },
-        rejected: { color: "bg-red-100 text-red-700", label: "Ditolak" },
-        selesai: { color: "bg-blue-100 text-blue-700", label: "Selesai" },
-    };
-
-    if (!registrations || registrations.length === 0) {
-        return (
-            <div className="text-center py-8">
-                <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500 text-sm">Belum ada pendaftaran event</p>
-                <button
-                    onClick={() => navigate("/events")}
-                    className="mt-3 text-sm text-purple-600 hover:text-purple-700 font-medium"
-                >
-                    Jelajahi Event →
-                </button>
-            </div>
-        );
-    }
+    const displayedRegistrations = registrations.slice(0, 5);
 
     return (
         <div className="space-y-3">
-            {registrations.slice(0, 5).map((reg, index) => {
-                const status = (reg.Status || reg.status || "pending").toLowerCase();
-                const config = statusConfig[status] || { color: "bg-gray-100 text-gray-700", label: status };
+            {displayedRegistrations.map((registration) => {
+                const event = registration.Event || registration.event;
+                const status = registration.Status || registration.status;
+                const statusLower = (status || "").toLowerCase();
 
                 return (
                     <div
-                        key={index}
-                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition"
+                        key={registration.ID || registration.id}
+                        className="border border-gray-200 rounded-xl p-4 hover:shadow-md transition"
                     >
-                        <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">
-                                {reg.Event?.Title || reg.event?.title || "Event"}
-                            </p>
-                            <p className="text-xs text-gray-500 mt-1">
-                                {formatDate(reg.CreatedAt || reg.created_at)}
-                            </p>
+                        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+                            <div className="flex-1">
+                                <h3 className="font-semibold text-gray-900 mb-2">
+                                    {event?.Title || event?.title || "Event"}
+                                </h3>
+                                <div className="space-y-1 text-sm text-gray-600">
+                                    <div className="flex items-center gap-2">
+                                        <Calendar className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                                        <span>{formatDate(event?.EventDate || event?.event_date)}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <MapPin className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                                        <span>{event?.Location || event?.location || "Lokasi"}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col gap-2 items-start md:items-end">
+                                <span
+                                    className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadge(
+                                        status
+                                    )}`}
+                                >
+                                    {status?.toUpperCase() || "PENDING"}
+                                </span>
+
+                                {statusLower === "approved" && (
+                                    <DocumentationUpload
+                                        registration={registration}
+                                        onUploadSuccess={onUploadSuccess}
+                                    />
+                                )}
+                            </div>
                         </div>
-                        <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${config.color}`}>
-                            {config.label}
-                        </span>
                     </div>
                 );
             })}
