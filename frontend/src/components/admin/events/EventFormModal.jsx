@@ -86,8 +86,8 @@ export default function EventFormModal({ event, onClose, onSaved }) {
 
             let response;
             if (event && event.id) {
-                response = await api.put(`/events/${event.id}`, form, {
-                    headers: { "Content-Type": "application/json" }
+                response = await api.put(`/events/${event.id}`, formData, {
+                    headers: { "Content-Type": "multipart/form-data" }
                 });
                 toast.success("Event berhasil diperbarui!");
             } else {
@@ -237,28 +237,26 @@ export default function EventFormModal({ event, onClose, onSaved }) {
                         )}
                     </div>
 
-                    {!event && (
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                <Upload className="w-4 h-4 inline mr-1" />
-                                Foto Event <span className="text-red-500">*</span>
-                            </label>
-                            <input
-                                type="file"
-                                accept="image/*"
-                                onChange={handleFileChange}
-                                className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 focus:outline-none transition ${errors.photo ? 'border-red-500' : 'border-gray-300'
-                                    }`}
-                                disabled={loading}
-                            />
-                            {errors.photo && (
-                                <p className="text-red-500 text-xs mt-1">{errors.photo}</p>
-                            )}
-                            <p className="text-xs text-gray-500 mt-1">
-                                Format: JPG, PNG, GIF. Maksimal 5MB
-                            </p>
-                        </div>
-                    )}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <Upload className="w-4 h-4 inline mr-1" />
+                            Foto Event {!event && <span className="text-red-500">*</span>}
+                        </label>
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleFileChange}
+                            className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 focus:outline-none transition ${errors.photo ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                            disabled={loading}
+                        />
+                        {errors.photo && (
+                            <p className="text-red-500 text-xs mt-1">{errors.photo}</p>
+                        )}
+                        <p className="text-xs text-gray-500 mt-1">
+                            {event ? "Upload foto baru jika ingin mengubah (opsional)" : "Format: JPG, PNG, GIF. Maksimal 5MB"}
+                        </p>
+                    </div>
 
                     <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
                         <button
@@ -276,11 +274,11 @@ export default function EventFormModal({ event, onClose, onSaved }) {
                         >
                             {loading ? (
                                 <>
-                                    <Loader2 size={16} className="animate-spin" />
-                                    Menyimpan...
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    <span>Menyimpan...</span>
                                 </>
                             ) : (
-                                "Simpan"
+                                <span>{event ? "Perbarui" : "Tambah"}</span>
                             )}
                         </button>
                     </div>
