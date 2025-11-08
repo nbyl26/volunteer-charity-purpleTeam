@@ -62,7 +62,12 @@ func SetupRoutes(app *fiber.App, db *gorm.DB) {
 		eventAdmin.Post("/", controllers.CreateEvent)
 		eventAdmin.Put("/:id", controllers.UpdateEvent)
 		eventAdmin.Delete("/:id", controllers.DeleteEvent)
+
 		eventAdmin.Patch("/registrations/:regId/approve/:volunteerId", controllers.ApproveVolunteer)
+
+		eventAdmin.Patch("/registrations/:regId/reject/:volunteerId", controllers.RejectVolunteer)
+		eventAdmin.Patch("/registrations/:regId/status", controllers.UpdateRegistrationStatus)
+
 		eventAdmin.Get("/:id/registrations", controllers.GetEventRegistrations)
 
 		campaignAdmin := api.Group("/campaigns", adminMiddleware...)
