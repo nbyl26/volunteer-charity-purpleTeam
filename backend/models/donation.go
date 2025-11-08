@@ -14,6 +14,7 @@ type Donation struct {
 	ID             uint           `gorm:"primaryKey"`
 	Amount         float64        `gorm:"not null"`
 	ProofOfPayment string         `gorm:"not null"`
+	Message        string         `gorm:"type:text"`
 	Status         DonationStatus `gorm:"type:varchar(20);default:'pending'"`
 	UserID     uint
 	CampaignID uint

@@ -27,7 +27,7 @@ type DonationResponse struct {
     ID             uint                  `json:"id"`
     Amount         float64               `json:"amount"`
     ProofOfPayment string                `json:"proof_of_payment"`
-    Message        string                `json:"message"` 
+    Message        string                `json:"message"`
     Status         models.DonationStatus `json:"status"`
     CreatedAt      time.Time             `json:"created_at"`
     User           SimpleUserResponse    `json:"user"`
@@ -82,41 +82,46 @@ func GetAllDonations(c *fiber.Ctx) error {
 }
 
 func CreateDonation(c *fiber.Ctx) error {
-    userID := uint(c.Locals("userID").(float64))
-    campaignID := c.Params("id")
+	userID := uint(c.Locals("userID").(float64))
+	campaignID := c.Params("id")
 
-    amountStr := c.FormValue("amount")
-    amount, err := strconv.ParseFloat(amountStr, 64)
-    if err != nil || amount <= 0 {
-        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid amount"})
-    }
+	amountStr := c.FormValue("amount")
+	amount, err := strconv.ParseFloat(amountStr, 64)
+	if err != nil || amount <= 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid amount"})
+	}
 
-    var campaign models.Campaign
-    if err := database.DB.First(&campaign, campaignID).Error; err != nil {
-        return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Campaign not found"})
-    }
+	var campaign models.Campaign
+	if err := database.DB.First(&campaign, campaignID).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Campaign not found"})
+	}
 
-    fileUrl, err := utils.SaveFile(c, "proof_of_payment", "./uploads")
-    if err != nil {
-        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "File upload failed: " + err.Error()})
-    }
+	fileUrl, err := utils.SaveFile(c, "proof_of_payment", "./uploads")
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "File upload failed: " + err.Error()})
+	}
 
-    message := c.FormValue("message") 
+	message := c.FormValue("message")
 
-    donation := models.Donation{
-        Amount:         amount,
-        ProofOfPayment: fileUrl,
-        Message:        message, 
-        Status:         models.StatusPending,
-        UserID:         userID,
-        CampaignID:     campaign.ID,
-    }
+	donation := models.Donation{
+		Amount:         amount,
+		ProofOfPayment: fileUrl,
+		Message:        message,
+		Status:         models.StatusPending,
+		UserID:         userID,
+		CampaignID:     campaign.ID,
+	}
 
-    if err := database.DB.Create(&donation).Error; err != nil {
-        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
-    }
+	if err := database.DB.Create(&donation).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
 
-    return c.Status(fiber.StatusCreated).JSON(donation)
+	var createdDonation models.Donation
+	if err := database.DB.Preload("User").Preload("Campaign").First(&createdDonation, donation.ID).Error; err != nil {
+		return c.Status(fiber.StatusCreated).JSON(donation)
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(createdDonation)
 }
 
 func VerifyDonation(c *fiber.Ctx) error {
@@ -160,4 +165,4 @@ func VerifyDonation(c *fiber.Ctx) error {
     }
 
     return c.Status(fiber.StatusOK).JSON(donation)
-}}
+}
