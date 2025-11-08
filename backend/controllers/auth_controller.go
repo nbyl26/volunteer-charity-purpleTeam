@@ -14,31 +14,31 @@ import (
 )
 
 type RegisterInput struct {
-    Name     string json:"name" validate:"required,min=3"
-    Email    string json:"email" validate:"required,email"
-    Password string json:"password" validate:"required,min=6"
+    Name     string `json:"name" validate:"required,min=3"`
+    Email    string `json:"email" validate:"required,email"`
+    Password string `json:"password" validate:"required,min=6"`
 }
 
 type LoginInput struct {
-    Email    string json:"email" validate:"required,email"
-    Password string json:"password" validate:"required"
+    Email    string `json:"email" validate:"required,email"`
+    Password string `json:"password" validate:"required"`
 }
 
 type ForgotPasswordInput struct {
-    Email string json:"email" validate:"required,email"
+    Email string `json:"email" validate:"required,email"`
 }
 
 type ResetPasswordInput struct {
-    Token       string json:"token" validate:"required"
-    NewPassword string json:"new_password" validate:"required,min=6"
+    Token       string `json:"token" validate:"required"`
+    NewPassword string `json:"new_password" validate:"required,min=6"`
 }
 
 type UserResponse struct {
-    ID        uint        json:"id"
-    Name      string      json:"name"
-    Email     string      json:"email"
-    Role      models.Role json:"role"
-    CreatedAt time.Time   json:"created_at"
+    ID        uint        `json:"id"`
+    Name      string      `json:"name"`
+    Email     string      `json:"email"`
+    Role      models.Role `json:"role"`
+    CreatedAt time.Time   `json:"created_at"`
 }
 
 func Register(c *fiber.Ctx) error {
