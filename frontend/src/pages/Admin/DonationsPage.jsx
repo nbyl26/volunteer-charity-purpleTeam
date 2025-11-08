@@ -5,7 +5,7 @@ import api from "../../config/api";
 import DonationStats from "../../components/admin/donations/DonationStats";
 import DonationFilters from "../../components/admin/donations/DonationFilters";
 import DonationTable from "../../components/admin/donations/DonationTable";
-import DonationDetailModal from "../../components/admin/DonationDetailModal";
+import DonationDetailModal from "../../components/admin/donations/DonationDetailModal";
 
 export default function DonationsPage() {
     const [donations, setDonations] = useState([]);
