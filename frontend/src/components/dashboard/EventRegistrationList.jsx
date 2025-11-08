@@ -1,4 +1,4 @@
-import { Calendar, MapPin, AlertCircle } from "lucide-react";
+import { AlertCircle, Calendar, MapPin } from "lucide-react";
 import DocumentationUpload from "./DocumentationUpload";
 
 export default function EventRegistrationList({ registrations, onUploadSuccess }) {
@@ -76,7 +76,7 @@ export default function EventRegistrationList({ registrations, onUploadSuccess }
                                     {status?.toUpperCase() || "PENDING"}
                                 </span>
 
-                                {statusLower === "approved" && (
+                                {(statusLower === "approved" || statusLower === "selesai") && (
                                     <DocumentationUpload
                                         registration={registration}
                                         onUploadSuccess={onUploadSuccess}

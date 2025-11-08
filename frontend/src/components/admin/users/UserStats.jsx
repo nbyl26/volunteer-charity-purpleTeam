@@ -29,11 +29,14 @@ export default function UserStats({ users }) {
     return (
         <div className="grid grid-cols-3 gap-3 md:gap-4 mb-6">
             {stats.map((stat, index) => (
-                <div key={index} className={`${stat.bgColor} border border-gray-200 rounded-xl p-4 shadow-sm`}>
-                    <div className={`text-2xl md:text-3xl font-bold ${stat.textColor}`}>
+                <div 
+                    key={index}
+                    className={`${stat.bgColor} rounded-xl p-4 border border-gray-100`}
+                >
+                    <div className={`text-2xl md:text-3xl font-bold ${stat.textColor} mb-1`}>
                         {stat.value}
                     </div>
-                    <div className="text-xs md:text-sm text-gray-600 mt-1">
+                    <div className="text-xs md:text-sm text-gray-600 font-medium">
                         {stat.label}
                     </div>
                 </div>

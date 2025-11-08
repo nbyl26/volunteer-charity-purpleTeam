@@ -1,4 +1,4 @@
-import { X, User, Mail, Shield, Calendar } from "lucide-react";
+import { X, User, Mail, Shield, Calendar, Heart, Users } from "lucide-react";
 
 export default function UserDetailModal({ user, onClose }) {
     const formatDate = (dateString) => {
@@ -19,8 +19,18 @@ export default function UserDetailModal({ user, onClose }) {
 
     const getRoleBadge = (role) => {
         const roleMap = {
-            admin: { bg: "bg-purple-100", text: "text-purple-700", border: "border-purple-200", label: "Admin" },
-            user: { bg: "bg-blue-100", text: "text-blue-700", border: "border-blue-200", label: "User" }
+            admin: { 
+                bg: "bg-purple-100", 
+                text: "text-purple-700", 
+                border: "border-purple-200", 
+                label: "Admin" 
+            },
+            user: { 
+                bg: "bg-blue-100", 
+                text: "text-blue-700", 
+                border: "border-blue-200", 
+                label: "User" 
+            }
         };
 
         const config = roleMap[role?.toLowerCase()] || roleMap.user;
@@ -93,26 +103,43 @@ export default function UserDetailModal({ user, onClose }) {
                                 {formatDate(user.created_at)}
                             </p>
                         </div>
+                    </div>
 
-                        <div>
-                            <div className="flex items-center gap-2 text-gray-600 mb-2">
-                                <Calendar className="w-4 h-4" />
-                                <span className="text-sm font-medium">Terakhir Diperbarui</span>
+                    <div className="bg-gray-50 rounded-lg p-4">
+                        <h3 className="font-semibold text-gray-900 mb-3">Aktivitas</h3>
+                        <div className="space-y-2 text-sm">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2 text-gray-600">
+                                    <Users className="w-4 h-4" />
+                                    <span>Event Registrations</span>
+                                </div>
+                                <span className="font-semibold text-gray-900">
+                                    {user.event_registrations?.length || 0}
+                                </span>
                             </div>
-                            <p className="text-gray-900 pl-6">
-                                {formatDate(user.updated_at)}
-                            </p>
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2 text-gray-600">
+                                    <Heart className="w-4 h-4" />
+                                    <span>Donations</span>
+                                </div>
+                                <span className="font-semibold text-gray-900">
+                                    {user.donations?.length || 0}
+                                </span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2 text-gray-600">
+                                    <Heart className="w-4 h-4" />
+                                    <span>Total Donasi</span>
+                                </div>
+                                <span className="font-semibold text-gray-900">
+                                    Rp {(user.donations || [])
+                                        .filter(d => d.Status === 'verified' || d.status === 'verified')
+                                        .reduce((sum, d) => sum + (parseFloat(d.Amount || d.amount) || 0), 0)
+                                        .toLocaleString('id-ID')}
+                                </span>
+                            </div>
                         </div>
                     </div>
-                </div>
-
-                <div className="border-t border-gray-200 px-6 py-4">
-                    <button
-                        onClick={onClose}
-                        className="w-full py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition font-medium"
-                    >
-                        Tutup
-                    </button>
                 </div>
             </div>
         </div>

@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import AuthLayout from "../components/AuthLayout";
 import AuthInput from "../components/AuthInput";
 import SocialButtons from "../components/SocialButtons";
-import { useAuth } from "../context/AuthContext";
 
 export default function Register() {
     const { register } = useAuth();
@@ -81,35 +81,23 @@ export default function Register() {
                     label="Email"
                     type="email"
                     name="email"
-                    placeholder="anda@contoh.com"
+                    placeholder="[email protected]"
                     required
                     value={form.email}
-                    onChange={(e) =>
-                        setForm({ ...form, email: e.target.value })
-                    }
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
                 />
 
                 <AuthInput
                     label="Password"
                     type="password"
                     name="password"
-                    placeholder="********"
+                    placeholder="Minimal 6 karakter"
                     required
                     value={form.password}
                     onChange={(e) =>
                         setForm({ ...form, password: e.target.value })
                     }
                 />
-
-                <div className="flex items-center gap-2 mb-4 text-sm">
-                    <input type="checkbox" required className="accent-purple-500" />
-                    <p>
-                        Saya setuju dengan{" "}
-                        <a href="#" className="text-purple-400 hover:underline">
-                            Syarat & Ketentuan
-                        </a>
-                    </p>
-                </div>
 
                 <button
                     type="submit"
