@@ -1,202 +1,180 @@
 # Backend - Platform Volunteer & Charity
 
-Ini adalah backend REST API untuk platform Volunteer & Charity. Proyek ini mengelola event kerelawanan, campaign donasi, dan manajemen user (Admin, Volunteer, Donatur).
+Ini adalah backend REST API untuk platform Volunteer & Charity. Proyek ini mengelola semua logika bisnis, data, dan autentikasi untuk aplikasi web.
 
 Proyek ini dibuat oleh **Purple Team**.
 
 ## ✨ Fitur Utama
 
-* **Autentikasi & Otorisasi:** Sistem login dan registrasi berbasis JWT (Access & Refresh Token) untuk tiga peran: Admin, Volunteer, dan Donatur.
-* **Manajemen Event (Admin):** Admin dapat membuat, membaca, memperbarui, dan menghapus (CRUD) event volunteer.
-* **Manajemen Campaign (Admin):** Admin dapat membuat, membaca, memperbarui, dan menghapus (CRUD) campaign donasi.
-* **Alur Pendaftaran Volunteer:** Volunteer dapat melihat daftar event dan mendaftar, kemudian statusnya akan menunggu persetujuan admin.
-* **Alur Donasi:** Donatur dapat melihat campaign dan mengirimkan donasi dengan mengupload bukti transfer.
-* **Verifikasi Admin:** Admin dapat memverifikasi bukti transfer donasi (approve/reject) dan menyetujui (approve) pendaftaran volunteer.
-* **Manajemen Profil:** User dapat melihat dan memperbarui data profil mereka.
-* **Upload File:** Mendukung upload file untuk bukti donasi dan dokumentasi aktivitas volunteer (opsional).
+* **Autentikasi Berbasis Cookie:** Sistem autentikasi aman menggunakan **HttpOnly Cookies** untuk menyimpan JWT (Access & Refresh Token).
+* **Alur Reset Password:** Fungsionalitas "Lupa Password" lengkap dengan verifikasi token via email (logika pengiriman email ada di `email_controller.go` dan `utils/password_reset.go`).
+* **Sistem Peran (Role):** Dua peran utama (Admin/User) dengan proteksi *middleware*.
+* **Manajemen Event (Multipart):** Admin dapat membuat event baru, termasuk meng-upload **foto event** dan mengatur **kategori** dalam satu *request* `form-data`.
+* **Filter Event:** Publik dapat memfilter event berdasarkan kategori (`GET /api/events?category=...`).
+* **Alur Donasi (Multipart):** User dapat mengirim donasi (`amount` + `proof_of_payment`) dalam satu *request* `form-data`.
+* **Manajemen Donasi (Admin):** Admin dapat melihat semua donasi (`GET /api/donations`) dan memverifikasinya.
+* **Validasi Input:** Setiap *request* divalidasi menggunakan `validator/v10`.
 
-## 🛠️ Teknologi yang Digunakan
+## 🛠️ Tumpukan Teknologi (Tech Stack)
 
-* **Go (Golang)**
-* **Fiber:** Framework web Go yang ekspresif dan cepat.
-* **GORM:** ORM untuk interaksi database.
-* **MySQL:** Database SQL.
-* **JWT (golang-jwt/v5):** Untuk implementasi Access Token dan Refresh Token.
-* **Godotenv:** Untuk manajemen environment variable dari file `.env`.
-* **Validator V10:** Untuk validasi struct pada input request.
-* **Bcrypt:** Untuk hashing password.
+* **Bahasa:** Go (Golang)
+* **Framework:** Fiber v2
+* **Database:** MySQL
+* **ORM:** GORM
+* **Autentikasi:** JWT (golang-jwt/v5) & Cookies
+* **Validasi:** Validator V10
+* **Hashing Password:** Bcrypt
+* **Manajemen Environment:** Godotenv
 
 ## 🚀 Cara Menjalankan
 
 ### 1. Prasyarat
 
-* **Go** (versi 1.18+ direkomendasikan).
-* **MySQL** (atau database SQL lain yang didukung GORM).
-* Sebuah tool API client seperti Postman atau Insomnia.
+* Go (versi 1.18+ direkomendasikan).
+* Server Database MySQL yang sedang berjalan.
+* Alat klien API seperti Postman atau Insomnia.
 
 ### 2. Instalasi
 
 1.  **Clone Repositori**
     ```bash
-    git clone <url-repositori-anda>
-    cd backend
+    git clone [https://github.com/naufal2376/volunteer-charity-purpleteam.git](https://github.com/naufal2376/volunteer-charity-purpleteam.git)
+    cd volunteer-charity-purpleteam/backend
     ```
 
-2.  **Setup Environment (.env)**
-    Buat file bernama `.env` di dalam folder `backend/` (sejajar dengan `main.go`). Salin konten di bawah ini dan sesuaikan dengan konfigurasi lokal Anda.
-
-    ```env
-    # Server Configuration
-    PORT=8080
-
-    # Database (MySQL) - GANTI INI
-    DB_HOST=127.0.0.1
-    DB_PORT=3306
-    DB_USER=root
-    DB_PASSWORD=secret
-    DB_NAME=volunteer_db
-
-    # JWT Secrets - GANTI INI DENGAN KATA ACAK YANG KUAT
-    JWT_ACCESS_SECRET="ganti-saya-dengan-access-secret-yang-aman"
-    JWT_REFRESH_SECRET="ganti-saya-dengan-refresh-secret-yang-aman"
-    JWT_EXPIRATION=15m
-    ```
+2.  **Buat File `.env`**
+    Salin file `env.example` menjadi file baru bernama `.env`. Buka file `.env` dan isi semua nilainya sesuai dengan konfigurasi lokal Anda.
 
 3.  **Buat Database**
     Pastikan Anda telah membuat database di MySQL dengan nama yang Anda tentukan di `.env` (contoh: `volunteer_db`).
-    ```sql
-    CREATE DATABASE volunteer_db;
+
+4.  **Buat Folder `uploads`**
+    Aplikasi perlu menyimpan file yang di-upload. Buat folder ini secara manual di *root* `backend/`.
+    ```bash
+    mkdir uploads
     ```
 
-4.  **Instalasi Dependensi**
-    Jalankan perintah ini untuk mengunduh semua library yang diperlukan:
+5.  **Instalasi Dependensi**
     ```bash
     go mod tidy
     ```
 
-5.  **Jalankan Server**
+6.  **Jalankan Server**
     ```bash
     go run main.go
     ```
-    Server akan berjalan di `http://localhost:8080` (atau port yang Anda tentukan di `.env`).
+    Server akan berjalan di `http://localhost:8080` (atau port yang Anda tentukan di `.env`). GORM akan secara otomatis menjalankan migrasi database (`database.MigrateDB()`).
 
-## 📁 Struktur Folder
+## 📋 Dokumentasi API Endpoint
 
-```
-/backend
-├── config/       # Mengelola config (JWT, Port) dari .env
-├── controllers/  # Logika bisnis (request handler) untuk setiap model
-├── database/     # Koneksi DB GORM & fungsi migrasi
-├── middleware/   # Middleware (Auth JWT, Role Based)
-├── models/       # Struct GORM (skema tabel database)
-├── routes/       # Definisi endpoint API dan routing
-├── utils/        # Fungsi pembantu (Validator, JWT generator)
-├── uploads/      # (Folder ini akan dibuat otomatis untuk menyimpan file)
-├── .env          # (File rahasia, tidak di-commit)
-├── main.go       # Entry point aplikasi (inisiasi server)
-└── go.mod        # Manajemen dependensi
-```
+Semua *endpoint* berada di bawah *prefix* `/api`.
 
-## 📋 Daftar API Endpoint
+### 1. 🏛️ Autentikasi (Publik)
 
-<details>
-<summary>Klik untuk melihat semua endpoint</summary>
+* **`POST /api/auth/register`**
+    Mendaftarkan user baru (otomatis sebagai *role* "user").
+    * **Body:** `JSON` (`name`, `email`, `password`)
 
-### 1. 🏛️ Publik / Guest (Tidak Perlu Login)
+* **`POST /api/auth/login`**
+    Melakukan login user. Mengatur `access_token` dan `refresh_token` sebagai HttpOnly Cookies.
+    * **Body:** `JSON` (`email`, `password`)
 
-* **Registrasi User (Volunteer / Donatur)**
-    * `POST /auth/register`
-    * Body (JSON): `{ "name": "...", "email": "...", "password": "...", "role": "volunteer" }`
+* **`POST /api/auth/logout`**
+    Menghapus *cookie* sesi.
+    * **Body:** Kosong
 
-* **Login User**
-    * `POST /auth/login`
-    * Body (JSON): `{ "email": "...", "password": "..." }`
+* **`POST /api/auth/refresh`**
+    Menggunakan `refresh_token` (dari *cookie*) untuk mendapatkan `access_token` baru.
+    * **Body:** Kosong
 
-* **Refresh Access Token**
-    * `POST /auth/refresh`
-    * Body (JSON): `{ "refresh_token": "..." }`
+* **`POST /api/auth/forgot-password`**
+    Memulai alur reset password. Mengirim token ke email user (jika `email_controller` dikonfigurasi).
+    * **Body:** `JSON` (`email`)
 
-* **Lihat Semua Event**
-    * `GET /events`
+* **`GET /api/auth/reset-password/:token`**
+    Memverifikasi apakah token reset valid.
+    * **Params:** `token` (dari link email)
 
-* **Liat Detail Event**
-    * `GET /events/:id`
+* **`POST /api/auth/reset-password/:token`**
+    Menetapkan password baru.
+    * **Params:** `token` (dari link email)
+    * **Body:** `JSON` (`password`)
 
-* **Lihat Semua Campaign Donasi**
-    * `GET /campaigns`
+### 2. 🌍 Konten Publik
 
-* **Lihat Detail Campaign Donasi**
-    * `GET /campaigns/:id`
+* **`GET /api/events`**
+    Mendapatkan semua event. Mendukung filter: `/api/events?category=pendidikan`.
 
-### 2. 👤 User Terotentikasi (Memerlukan Auth Header)
+* **`GET /api/events/:id`**
+    Mendapatkan detail satu event.
 
-* **Cek Profil Singkat (Siapa saya?)**
-    * `GET /auth/me`
+* **`GET /api/campaigns`**
+    Mendapatkan semua campaign donasi.
 
-* **Lihat Profil Lengkap (Termasuk Riwayat)**
-    * `GET /users/me`
+* **`GET /api/campaigns/:id`**
+    Mendapatkan detail satu campaign.
 
-* **Update Profil (Nama / Email)**
-    * `PATCH /users/me`
-    * Body (JSON): `{ "name": "...", "email": "..." }`
+* **`POST /api/contact`**
+    *Endpoint* untuk *form* "Hubungi Kami".
 
-### 3. 🧑‍🤝‍🧑 Khusus Volunteer (Role: "volunteer")
+* **`GET /files/:filename`**
+    *Endpoint* statis untuk mengambil gambar yang telah di-upload (misal: `/files/foto-event.jpg`).
 
-* **Mendaftar Ikut Event**
-    * `POST /events/:id/join`
+### 3. 👤 User (Memerlukan Autentikasi Cookie)
 
-* **Upload Dokumentasi Aktivitas**
-    * `POST /upload/documentation/:regId`
-    * Body: `Form-Data` (Key: `documentation`, Value: [File])
+* **`GET /api/auth/me`**
+    Mendapatkan data singkat user yang sedang login.
 
-### 4. 💰 Khusus Donatur (Role: "donatur")
+* **`GET /api/users/me`**
+    Mendapatkan data profil lengkap (termasuk riwayat event dan donasi).
 
-* **Kirim Donasi ke Campaign**
-    * `POST /campaigns/:id/donate`
-    * Body: `Form-Data` (Key: `amount`, Value: `50000`; Key: `proof_of_payment`, Value: [File])
+* **`PATCH /api/users/me`**
+    Memperbarui profil user (nama atau email).
 
-### 5. 👑 Khusus Admin (Role: "admin")
+* **`POST /api/events/:id/join`**
+    Mendaftarkan user (sebagai volunteer) ke sebuah event.
 
-* **Membuat Event Baru**
-    * `POST /events`
-    * Body (JSON): `{ "title": "...", "description": "...", "location": "...", "event_date": "..." }`
+* **`POST /api/campaigns/:id/donate`**
+    Mengirim donasi ke sebuah campaign.
+    * **Body:** `multipart/form-data` (`amount`, `proof_of_payment` [file])
 
-* **Update Event**
-    * `PUT /events/:id`
-    * Body (JSON): (Sama seperti membuat event)
+* **`POST /api/upload/documentation/:regId`**
+    Meng-upload file dokumentasi untuk event yang telah diikuti.
+    * **Body:** `multipart/form-data` (`documentation` [file])
 
-* **Hapus Event**
-    * `DELETE /events/:id`
+### 4. 👑 Admin (Memerlukan Autentikasi Cookie + Role "admin")
 
-* **Approve Pendaftaran Volunteer**
-    * `PATCH /events/registrations/:regId/approve/:volunteerId`
+* **`POST /api/events`**
+    Membuat event baru.
+    * **Body:** `multipart/form-data` (`title`, `description`, `location`, `category`, `event_date` [teks, format ISO], `photo` [file])
 
-* **Membuat Campaign Donasi Baru**
-    * `POST /campaigns`
-    * Body (JSON): `{ "title": "...", "description": "...", "target": 10000000.0 }`
+* **`PUT /api/events/:id`**
+    Memperbarui data **teks** event.
 
-* **Update Campaign Donasi**
-    * `PUT /campaigns/:id`
-    * Body (JSON): (Sama seperti membuat campaign)
+* **`DELETE /api/events/:id`**
+    Menghapus event.
 
-* **Hapus Campaign Donasi**
-    * `DELETE /campaigns/:id`
+* **`PATCH /api/events/registrations/:regId/approve/:volunteerId`**
+    Menyetujui pendaftaran volunteer untuk sebuah event.
 
-* **Verifikasi Donasi Masuk**
-    * `PATCH /donations/:id/verify`
-    * Body (JSON): `{ "status": "verified" }` atau `{ "status": "rejected" }`
+* **`POST /api/campaigns`**
+    Membuat campaign donasi baru.
 
-* **Lihat Semua User**
-    * `GET /users`
+* **`PUT /api/campaigns/:id`**
+    Memperbarui campaign donasi.
 
-* **Lihat Detail User**
-    * `GET /users/:id`
+* **`DELETE /api/campaigns/:id`**
+    Menghapus campaign donasi.
 
-</details>
+* **`GET /api/donations`**
+    Mendapatkan daftar semua donasi yang masuk dari semua user.
 
----
+* **`PATCH /api/donations/:id/verify`**
+    Memverifikasi atau menolak donasi.
+    * **Body:** `JSON` (`status`: `"verified"` / `"rejected"`)
 
-## 👥 Kontributor
+* **`GET /api/users`**
+    Mendapatkan daftar semua user di platform.
 
-* **Nabil Pasha** (Frontend)
-* **M. Naufal Rafif** (Backend)
+* **`GET /api/users/:id`**
+    Mendapatkan detail profil lengkap dari satu user.
