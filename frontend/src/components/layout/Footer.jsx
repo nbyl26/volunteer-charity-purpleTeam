@@ -1,14 +1,14 @@
 import { Github, Instagram, Linkedin } from "lucide-react";
-import logo from "../assets/logo.png";
+import { Link } from "react-router-dom";
+
+import logo from "../../assets/logo.png";
 
 export default function Footer() {
     return (
         <footer className="bg-purple-600 text-white relative overflow-hidden">
-            {/* Background globe pattern */}
             <div className="absolute inset-0 opacity-20 bg-[url('/globe-bg.svg')] bg-cover bg-left"></div>
 
             <div className="relative max-w-7xl mx-auto px-6 py-12 grid grid-cols-1 md:grid-cols-3 gap-10">
-                {/* Logo & Deskripsi */}
                 <div>
                     <div className="flex items-center space-x-2 mb-4">
                         <img
@@ -24,37 +24,39 @@ export default function Footer() {
                     </p>
                 </div>
 
-                {/* Quick Links */}
                 <div>
                     <h3 className="font-semibold mb-4 uppercase tracking-wide">
                         Menu
                     </h3>
                     <ul className="space-y-2">
                         <li>
-                            <a href="#about" className="text-white hover:text-gray-200 transition">
+                            <Link to="/about" className="text-white hover:text-gray-200 transition">
                                 Tentang Kami
-                            </a>
+                            </Link>
                         </li>
                         <li>
-                            <a href="#events" className="text-white hover:text-gray-200 transition">
-                                Kegiatan
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#get-involved" className="text-white hover:text-gray-200 transition">
+                            <Link to="/get-involved" className="text-white hover:text-gray-200 transition">
                                 Bergabunglah
-                            </a>
+                            </Link>
                         </li>
                         <li>
-                            <a href="#contact" className="text-white hover:text-gray-200 transition">
+                            <Link to="/campaigns" className="text-white hover:text-gray-200 transition">
+                                Kampanye
+                            </Link>
+                        </li>
+                        <li>
+                            <Link to="/events" className="text-white hover:text-gray-200 transition">
+                                Kegiatan
+                            </Link>
+                        </li>
+                        <li>
+                            <Link to="/contact" className="text-white hover:text-gray-200 transition">
                                 Kontak
-                            </a>
+                            </Link>
                         </li>
                     </ul>
-
                 </div>
 
-                {/* Contact & Social */}
                 <div>
                     <h3 className="font-semibold mb-4 uppercase tracking-wide">
                         Hubungi Kami

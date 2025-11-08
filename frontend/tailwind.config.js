@@ -9,8 +9,8 @@ module.exports = {
     },
     extend: {
       colors: {
-        primary: "#6C4AB6", // warna purple tim
-        secondary: "#FF6F61", // CTA donate
+        primary: "#6C4AB6", 
+        secondary: "#FF6F61", 
         neutralLight: "#F9FAFB",
         neutralDark: "#1F2937",
         accent: "#34D399",

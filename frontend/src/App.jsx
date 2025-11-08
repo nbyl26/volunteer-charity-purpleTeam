@@ -1,34 +1,54 @@
-import { BrowserRouter as Router, Routes, Route, useLocation, Navigate, } from "react-router-dom";
-import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from "react-router-dom";
+import Navbar from "./components/layout/Navbar";
+import Footer from "./components/layout/Footer";
 
 import Home from "./pages/Home";
 import About from "./pages/About";
 import GetInvolved from "./pages/GetInvolved";
 import Events from "./pages/Events";
 import EventDetail from "./pages/EventDetail";
+import Campaigns from "./pages/Campaigns";
+import CampaignDetail from "./pages/CampaignDetail";
 import Contact from "./pages/Contact";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword"
 import Donate from "./pages/Donate";
 import JoinEvent from "./pages/JoinEvent";
 import Dashboard from "./pages/Dashboard";
-import AdminPanel from "./pages/AdminPanel";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
+
+import AdminLayout from "./pages/Admin/AdminLayout";
+import AdminDashboard from "./pages/Admin/AdminDashboard";
+import EventsPage from "./pages/Admin/EventsPage";
+import CampaignsPage from "./pages/Admin/CampaignsPage";
+import UsersPage from "./pages/Admin/UsersPage";
+import DonationsPage from "./pages/Admin/DonationsPage";
+import AnalyticsPage from "./pages/Admin/AnalyticsPage";
+import EventRegistrations from "./pages/Admin/EventRegistrations";
+import VolunteersPage from "./pages/Admin/VolunteersPage";
 
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
+import { Toaster } from "react-hot-toast";
+
 function LayoutWrapper({ children }) {
   const location = useLocation();
-  const hideLayout = ["/login", "/register", "/forgot-password"].includes(
-    location.pathname
-  );
+  const hideLayoutPaths = ["/login", "/register", "/forgot-password"];
+  const isAuthPage = hideLayoutPaths.includes(location.pathname);
+  const isAdminPage = location.pathname.startsWith("/admin");
+
+  if (isAuthPage || isAdminPage) {
+    return <>{children}</>;
+  }
 
   return (
     <>
-      {!hideLayout && <Navbar />}
+      <Navbar />
       {children}
-      {!hideLayout && <Footer />}
+      <Footer />
     </>
   );
 }
@@ -68,7 +88,7 @@ function AuthRoute({ children }) {
     }
     return <Navigate to="/dashboard" />;
   }
-    
+
   return children;
 }
 
@@ -78,12 +98,35 @@ function App() {
       <Router>
         <LayoutWrapper>
           <Routes>
+            {/* Public Routes */}
             <Route path="/" element={<Home />} />
             <Route path="/about" element={<About />} />
             <Route path="/get-involved" element={<GetInvolved />} />
             <Route path="/events" element={<Events />} />
             <Route path="/events/:id" element={<EventDetail />} />
+            <Route path="/campaigns" element={<Campaigns />} />
+            <Route path="/campaigns/:id" element={<CampaignDetail />} />
             <Route path="/contact" element={<Contact />} />
+
+            {/* Legal Pages */}
+            <Route
+              path="/terms"
+              element={
+                <LayoutWrapper>
+                  <Terms />
+                </LayoutWrapper>
+              }
+            />
+            <Route
+              path="/privacy"
+              element={
+                <LayoutWrapper>
+                  <Privacy />
+                </LayoutWrapper>
+              }
+            />
+
+            {/* Auth Routes */}
             <Route
               path="/login"
               element={
@@ -109,6 +152,16 @@ function App() {
               }
             />
             <Route
+              path="/reset-password"
+              element={
+                <AuthRoute>
+                  <ResetPassword />
+                </AuthRoute>
+              }
+            />
+
+            {/* Protected Routes */}
+            <Route
               path="/donate"
               element={
                 <PrivateRoute>
@@ -116,7 +169,14 @@ function App() {
                 </PrivateRoute>
               }
             />
-
+            <Route
+              path="/donate/:id"
+              element={
+                <PrivateRoute>
+                  <Donate />
+                </PrivateRoute>
+              }
+            />
             <Route
               path="/join-event"
               element={
@@ -134,15 +194,6 @@ function App() {
               }
             />
             <Route
-              path="/donate/:id"
-              element={
-                <PrivateRoute>
-                  <Donate />
-                </PrivateRoute>
-              }
-            />
-            
-            <Route
               path="/dashboard"
               element={
                 <PrivateRoute>
@@ -150,18 +201,32 @@ function App() {
                 </PrivateRoute>
               }
             />
+
+            {/* Admin Routes */}
             <Route
               path="/admin"
               element={
                 <PrivateRoute adminOnly>
-                  <AdminPanel />
+                  <AdminLayout />
                 </PrivateRoute>
               }
-            />
+            >
+              <Route index element={<AdminDashboard />} />
+              <Route path="events" element={<EventsPage />} />
+              <Route path="volunteers" element={<VolunteersPage />} />
+              <Route path="events/:eventId/registrations" element={<EventRegistrations />} />
+              <Route path="users" element={<UsersPage />} />
+              <Route path="campaigns" element={<CampaignsPage />} />
+              <Route path="donations" element={<DonationsPage />} />
+              <Route path="analytics" element={<AnalyticsPage />} />
+            </Route>
+
+            {/* Default Fallback */}
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </LayoutWrapper>
       </Router>
+      <Toaster position="top-center" reverseOrder={false} />
     </AuthProvider>
   );
 }
