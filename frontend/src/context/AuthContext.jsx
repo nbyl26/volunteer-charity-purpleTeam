@@ -61,6 +61,23 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    const checkAuth = async () => {
+        try {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                setUser(null);
+                return;
+            }
+
+            const response = await api.get(API_ENDPOINTS.AUTH.ME);
+            setUser(response.data.user);
+        } catch (error) {
+            console.error("Auth check failed:", error);
+            localStorage.removeItem("token");
+            setUser(null);
+        }
+    };
+
     return (
         <AuthContext.Provider value={{ user, loading, login, register, logout }}>
             {children}

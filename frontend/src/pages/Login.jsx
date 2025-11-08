@@ -1,104 +1,26 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import AuthLayout from "../components/AuthLayout";
-import AuthInput from "../components/AuthInput";
-import SocialButtons from "../components/SocialButtons";
-import { useAuth } from "../context/AuthContext";
+import { motion, AnimatePresence } from "framer-motion";
+import AuthHero from "../components/auth/AuthHero";
+import LoginForm from "../components/auth/LoginForm";
 
 export default function Login() {
-    const { login } = useAuth();
-    const navigate = useNavigate();
-
-    const [form, setForm] = useState({ email: "", password: "" });
-    const [error, setError] = useState("");
-    const [loading, setLoading] = useState(false);
-
-    const handleLogin = async (e) => {
-        e.preventDefault();
-        setError("");
-        setLoading(true);
-
-        try {
-            await login(form.email, form.password);
-            navigate("/dashboard");
-        } catch (err) {
-            console.error("Login error:", err);
-            setError("Email atau password salah.");
-        } finally {
-            setLoading(false);
-        }
-    };
-
     return (
-        <AuthLayout
-            title="Selamat datang kembali!"
-            subtitle="Masuk untuk melanjutkan perjalanan Anda dengan PurpleCare"
-            quote={{
-                title: "Menghubungkan Hati, Memberdayakan Perubahan",
-                subtitle:
-                    "Bergabunglah dengan ribuan relawan yang membuat perubahan setiap hari.",
-            }}
-        >
-            <form onSubmit={handleLogin}>
-                {error && (
-                    <div className="bg-red-100 text-red-700 p-3 rounded-md mb-4 text-sm text-center">
-                        {error}
-                    </div>
-                )}
-
-                <AuthInput
-                    label="Email"
-                    type="email"
-                    name="email"
-                    placeholder="test@gmail.com"
-                    required
-                    value={form.email}
-                    onChange={(e) =>
-                        setForm({ ...form, email: e.target.value })
-                    }
-                />
-
-                <AuthInput
-                    label="Password"
-                    type="password"
-                    name="password"
-                    placeholder="********"
-                    required
-                    value={form.password}
-                    onChange={(e) =>
-                        setForm({ ...form, password: e.target.value })
-                    }
-                />
-
-                <div className="text-right mb-4">
-                    <Link
-                        to="/forgot-password"
-                        className="text-purple-400 text-sm hover:underline"
-                    >
-                        Lupa password?
-                    </Link>
-                </div>
-
-                <button
-                    type="submit"
-                    disabled={loading}
-                    className={`w-full py-2 rounded-xl font-semibold text-white transition ${loading
-                            ? "bg-purple-400 cursor-not-allowed"
-                            : "bg-purple-600 hover:bg-purple-700"
-                        }`}
+        <div className="min-h-screen flex bg-[#120E24]">
+            <AnimatePresence mode="wait">
+                <motion.div
+                    key="login"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="flex w-full"
                 >
-                    {loading ? "Sedang masuk..." : "Masuk"}
-                </button>
-            </form>
+                    <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
+                        <LoginForm />
+                    </div>
 
-            <SocialButtons />
-
-            <p className="text-center text-gray-400 text-sm mt-6">
-                Tidak punya akun?{" "}
-                <Link to="/register" className="text-purple-400 hover:underline">
-                    Daftar
-                </Link>
-            </p>
-        </AuthLayout>
+                    <AuthHero isLogin={true} />
+                </motion.div>
+            </AnimatePresence>
+        </div>
     );
 }

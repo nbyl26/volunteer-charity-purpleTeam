@@ -1,23 +1,115 @@
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { events } from "../data/events";
-import { ArrowLeft, Calendar, MapPin, Users, Heart } from "lucide-react";
+import { ArrowLeft, Loader2, Heart } from "lucide-react";
+import api, { API_ENDPOINTS } from "../config/api";
 import bgHero from "../assets/bg-hero.svg";
+
+import EventHero from "../components/event-detail/EventHero";
+import EventInfo from "../components/event-detail/EventInfo";
+import EventAbout from "../components/event-detail/EventAbout";
+import ImageModal from "../components/event-detail/ImageModal";
 
 export default function EventDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const [event, setEvent] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState("");
+    const [showImageModal, setShowImageModal] = useState(false);
 
-    // Ambil event berdasarkan id
-    const event = events.find((e) => e.id === id);
+    useEffect(() => {
+        fetchEvent();
+    }, [id]);
 
-    if (!event) {
+    const fetchEvent = async () => {
+        try {
+            setLoading(true);
+            setError("");
+            const res = await api.get(API_ENDPOINTS.EVENTS.DETAIL(id));
+
+            let imageUrl = res.data.PhotoURL || res.data.image;
+
+            if (imageUrl && imageUrl.startsWith('/')) {
+                imageUrl = `http://localhost:8080${imageUrl}`;
+            }
+
+            if (!imageUrl) {
+                imageUrl = "/default-event.jpg";
+            }
+
+            const transformedEvent = {
+                id: res.data.ID || res.data.id,
+                title: res.data.Title || res.data.title,
+                description: res.data.Description || res.data.description,
+                location: res.data.Location || res.data.location,
+                date: res.data.EventDate,
+                image: imageUrl,
+                category: res.data.Category || res.data.category,
+                registrations: res.data.Registrations || []
+            };
+
+            setEvent(transformedEvent);
+        } catch (err) {
+            console.error("Error fetching event:", err);
+            if (err.response?.status === 404) {
+                setError("Event tidak ditemukan");
+            } else {
+                setError("Gagal memuat detail event. Silakan coba lagi.");
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const formatDate = (isoString) => {
+        if (!isoString) return "Tanggal tidak tersedia";
+        try {
+            const date = new Date(isoString);
+            if (isNaN(date.getTime())) return "Tanggal tidak valid";
+
+            return date.toLocaleDateString("id-ID", {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+            });
+        } catch {
+            return "Tanggal tidak valid";
+        }
+    };
+
+    const getVolunteerCount = () => {
+        if (!event?.registrations) return 0;
+        return event.registrations.filter(reg =>
+            reg.Status === 'approved' || reg.Status === 'selesai'
+        ).length;
+    };
+
+    if (loading) {
         return (
-            <div className="min-h-screen flex flex-col justify-center items-center text-center px-6">
-                <h1 className="text-3xl font-bold text-gray-800 mb-4">Acara Tidak Ditemukan</h1>
-                <p className="text-gray-500 mb-8">Acara yang Anda cari tidak ditemukan.</p>
+            <div className="min-h-screen flex items-center justify-center bg-gray-50 pt-20">
+                <div className="text-center">
+                    <Loader2 className="w-10 h-10 md:w-12 md:h-12 text-purple-600 animate-spin mx-auto mb-4" />
+                    <p className="text-gray-600 text-sm md:text-base">Memuat detail acara...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (error || !event) {
+        return (
+            <div className="min-h-screen flex flex-col justify-center items-center text-center px-4 md:px-6 bg-gray-50 pt-20">
+                <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Heart className="w-8 h-8 text-red-600" />
+                </div>
+                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3">
+                    Acara Tidak Ditemukan
+                </h1>
+                <p className="text-gray-600 mb-6 max-w-md text-sm md:text-base">
+                    {error || "Acara yang Anda cari tidak ditemukan."}
+                </p>
                 <button
                     onClick={() => navigate("/events")}
-                    className="px-6 py-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition"
+                    className="px-6 py-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition font-medium shadow-md"
                 >
                     Kembali ke Acara
                 </button>
@@ -25,92 +117,46 @@ export default function EventDetail() {
         );
     }
 
+    const volunteerCount = getVolunteerCount();
+
     return (
         <div className="relative bg-gray-50 min-h-screen">
-            {/* Background Globe */}
-            <div className="absolute inset-0 pointer-events-none opacity-10">
-                <img src={bgHero} alt="globe" className="w-[900px] -translate-x-20" />
+            <div className="absolute inset-0 pointer-events-none opacity-[0.05]">
+                <img src={bgHero} alt="background globe" className="w-[900px] -translate-x-20 select-none" />
             </div>
 
-            <div className="relative max-w-6xl mx-auto px-6 py-16">
-                {/* Back Button */}
+            <div className="relative max-w-6xl mx-auto px-4 md:px-6 py-12 md:py-16">
                 <button
                     onClick={() => navigate(-1)}
                     className="flex items-center gap-2 text-purple-600 hover:text-purple-700 font-medium mb-6"
                 >
-                    <ArrowLeft className="w-4 h-4" /> Kembali
+                    <ArrowLeft className="w-4 h-4" />
+                    <span className="hidden sm:inline">Kembali</span>
                 </button>
 
-                {/* Header Section */}
-                <div className="flex flex-col lg:flex-row gap-10 items-start">
-                    <div className="flex-1">
-                        <img
-                            src={event.image}
-                            alt={event.title}
-                            className="w-full h-[380px] object-cover rounded-2xl shadow-lg"
-                        />
-                    </div>
+                <div className="flex flex-col lg:flex-row gap-8 md:gap-10 items-start">
+                    <EventHero 
+                        event={event}
+                        onImageClick={() => setShowImageModal(true)}
+                    />
 
-                    <div className="flex-1">
-                        <h1 className="text-4xl font-bold text-gray-900 mb-3">{event.title}</h1>
-                        <p className="text-gray-600 mb-6 leading-relaxed">{event.description}</p>
-
-                        <div className="space-y-3 mb-6">
-                            <div className="flex items-center gap-2 text-gray-700">
-                                <Calendar className="w-5 h-5 text-purple-600" />
-                                <span>
-                                    {new Date(event.date).toLocaleDateString("id-ID", {
-                                        day: "numeric",
-                                        month: "long",
-                                        year: "numeric",
-                                    })}
-                                </span>
-                            </div>
-                            <div className="flex items-center gap-2 text-gray-700">
-                                <MapPin className="w-5 h-5 text-purple-600" />
-                                <span>{event.location || "Online / Hybrid"}</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-gray-700">
-                                <Users className="w-5 h-5 text-purple-600" />
-                                <span>Perkiraan {Math.floor(Math.random() * 200 + 50)} relawan</span>
-                            </div>
-                        </div>
-
-                        <div className="flex flex-wrap gap-4">
-                            <button
-                                onClick={() => navigate(`/join-event/${event.id}`)}
-                                className="px-6 py-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition"
-                            >
-                                Jadi Relawan
-                            </button>
-
-                            <button
-                                onClick={() => navigate(`/donate/${event.id}`)}
-                                className="px-6 py-3 border border-purple-600 text-purple-600 rounded-xl hover:bg-purple-50 transition flex items-center gap-2"
-                            >
-                                <Heart className="w-4 h-4" /> Donasi Sekarang
-                            </button>
-                        </div>
-                    </div>
+                    <EventInfo
+                        event={event}
+                        volunteerCount={volunteerCount}
+                        formatDate={formatDate}
+                    />
                 </div>
 
-                {/* Additional Details */}
-                <div className="mt-16">
-                    <h2 className="text-2xl font-semibold text-gray-900 mb-4">Tentang Acara Ini</h2>
-                    <p className="text-gray-600 leading-relaxed mb-6">
-                        Acara ini bertujuan untuk menyatukan relawan, donatur, dan anggota komunitas
-                        untuk menciptakan dampak yang berarti. Anda dapat bergabung sebagai relawan,
-                        memberikan donasi, atau membantu menyebarkan kesadaran.
-                    </p>
-
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Cara Anda Dapat Membantu</h3>
-                    <ul className="list-disc list-inside text-gray-600 space-y-2">
-                        <li>Berpartisipasi sebagai relawan selama acara berlangsung.</li>
-                        <li>Donasi untuk membantu mendanai perlengkapan dan logistik.</li>
-                        <li>Bagikan acara ini untuk menjangkau lebih banyak orang.</li>
-                    </ul>
-                </div>
+                <EventAbout />
             </div>
+
+            {showImageModal && (
+                <ImageModal
+                    image={event.image}
+                    title={event.title}
+                    onClose={() => setShowImageModal(false)}
+                />
+            )}
         </div>
     );
 }

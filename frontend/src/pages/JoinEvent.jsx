@@ -1,185 +1,198 @@
-import React, { useState } from "react";
-import { useParams } from "react-router-dom";
-import { CalendarDays, MapPin, Heart } from "lucide-react";
-
-// Simulasi data event nanti bakal ku ganti pake API
-const mockEvents = [
-    {
-        id: "1",
-        title: "Hari Bersih-Bersih Komunitas",
-        date: "12 November 2025",
-        location: "Jakarta Selatan, Indonesia",
-        description:
-            "Bergabunglah dengan kami membersihkan dan mempercantik area taman setempat untuk meningkatkan kesadaran lingkungan dan keterlibatan komunitas.",
-        image:
-            "https://images.unsplash.com/photo-1522202222206-7fbe6ecb92d9?auto=format&fit=crop&w=900&q=60",
-    },
-    {
-        id: "2",
-        title: "Pengumpulan Makanan untuk Tunawisma",
-        date: "20 November 2025",
-        location: "Bandung, Indonesia",
-        description:
-            "Bantu mendistribusikan makanan dan barang-barang penting bagi yang membutuhkan sambil terhubung dengan sesama relawan.",
-        image:
-            "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=60",
-    },
-];
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { Heart, Loader2, ArrowLeft } from "lucide-react";
+import api, { API_ENDPOINTS } from "../config/api";
+import { useAuth } from "../context/AuthContext";
+import toast from "react-hot-toast";
+import EventHero from "../components/join-event/EventHero";
+import EventDetails from "../components/join-event/EventDetails";
+import RegistrationForm from "../components/join-event/RegistrationForm";
+import SuccessMessage from "../components/join-event/SuccessMessage";
 
 export default function JoinEvent() {
     const { id } = useParams();
-    const event = mockEvents.find((e) => e.id === id);
-
-    const [formData, setFormData] = useState({
-        fullName: "",
-        email: "",
-        phone: "",
-        reason: "",
-    });
+    const navigate = useNavigate();
+    const { user } = useAuth();
+    const [event, setEvent] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
     const [success, setSuccess] = useState(false);
+    const [error, setError] = useState("");
 
-    if (!event) {
+    useEffect(() => {
+        fetchEvent();
+    }, [id]);
+
+    const fetchEvent = async () => {
+        try {
+            setLoading(true);
+            const res = await api.get(API_ENDPOINTS.EVENTS.DETAIL(id));
+
+            let imageUrl = res.data.PhotoURL || res.data.image;
+
+            if (imageUrl && imageUrl.startsWith("/")) {
+                imageUrl = `http://localhost:8080${imageUrl}`;
+            }
+
+            if (!imageUrl) {
+                imageUrl = "/default-event.jpg";
+            }
+
+            const transformedEvent = {
+                id: res.data.ID || res.data.id,
+                title: res.data.Title || res.data.title,
+                description: res.data.Description || res.data.description,
+                location: res.data.Location || res.data.location,
+                date: res.data.EventDate,
+                image: imageUrl,
+            };
+
+            setEvent(transformedEvent);
+        } catch (err) {
+            console.error("Error fetching event:", err);
+            if (err.response?.status === 404) {
+                setError("Event tidak ditemukan");
+            } else {
+                setError("Gagal memuat data event. Silakan coba lagi.");
+            }
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const formatDate = (isoString) => {
+        if (!isoString) return "Tanggal tidak tersedia";
+        try {
+            const date = new Date(isoString);
+            if (isNaN(date.getTime())) return "Tanggal tidak valid";
+
+            return date.toLocaleDateString("id-ID", {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+            });
+        } catch {
+            return "Tanggal tidak valid";
+        }
+    };
+
+    const handleSubmit = async (e) => {
+        e?.preventDefault();
+
+        if (!user) {
+            toast.error("Silakan login terlebih dahulu untuk bergabung dengan event");
+            navigate("/login");
+            return;
+        }
+
+        setSubmitting(true);
+
+        try {
+            await api.post(API_ENDPOINTS.EVENTS.JOIN(id));
+
+            toast.success("Berhasil mendaftar sebagai relawan! Status Anda: Pending");
+            setSuccess(true);
+
+            setTimeout(() => {
+                navigate("/events");
+            }, 3000);
+        } catch (err) {
+            console.error("Error joining event:", err);
+
+            if (err.response?.status === 409) {
+                toast.error("Anda sudah terdaftar untuk event ini");
+                setTimeout(() => {
+                    navigate("/events");
+                }, 2000);
+            } else if (err.response?.status === 401) {
+                toast.error("Sesi login telah berakhir. Silakan login kembali.");
+                localStorage.removeItem("token");
+                setTimeout(() => {
+                    navigate("/login");
+                }, 2000);
+            } else if (err.response?.status === 403) {
+                toast.error("Anda tidak memiliki izin untuk mendaftar event ini");
+            } else if (err.response?.status === 404) {
+                toast.error("Event tidak ditemukan");
+            } else if (err.code === "NETWORK_ERROR" || !err.response) {
+                toast.error("Koneksi internet bermasalah. Silakan coba lagi.");
+            } else {
+                toast.error("Gagal mendaftar. Silakan coba lagi.");
+            }
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center text-gray-600">
-                <p>Acara tidak ditemukan.</p>
+            <div className="min-h-screen flex items-center justify-center bg-gray-50 pt-20">
+                <div className="text-center">
+                    <Loader2 className="w-10 h-10 md:w-12 md:h-12 text-purple-600 animate-spin mx-auto mb-4" />
+                    <p className="text-gray-600 text-sm md:text-base">Memuat event...</p>
+                </div>
             </div>
         );
     }
 
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        if (!formData.fullName || !formData.email || !formData.phone || !formData.reason) {
-            alert("Harap isi semua field sebelum mengirim.");
-            return;
-        }
-        setSuccess(true);
-        setFormData({
-            fullName: "",
-            email: "",
-            phone: "",
-            reason: "",
-        });
-    };
+    if (error || !event) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50 pt-20 px-4 md:px-6">
+                <div className="text-center max-w-md">
+                    <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Heart className="w-8 h-8 text-red-600" />
+                    </div>
+                    <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                        Event Tidak Ditemukan
+                    </h1>
+                    <p className="text-gray-600 mb-6 text-sm md:text-base">
+                        {error || "Event yang Anda cari tidak ditemukan."}
+                    </p>
+                    <button
+                        onClick={() => navigate("/events")}
+                        className="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-medium"
+                    >
+                        Kembali ke Events
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-purple-50 to-white py-20 px-6">
+        <div className="min-h-screen bg-gray-50 py-20 md:py-24 px-4 md:px-6">
+            <div className="max-w-5xl mx-auto mb-6">
+                <button
+                    onClick={() => navigate(-1)}
+                    className="flex items-center gap-2 text-purple-600 hover:text-purple-700 font-medium"
+                >
+                    <ArrowLeft className="w-5 h-5" />
+                    Kembali
+                </button>
+            </div>
+
             <div className="max-w-5xl mx-auto bg-white shadow-md rounded-2xl border border-gray-100 overflow-hidden">
-                {/* Event Header */}
-                <div className="relative">
-                    <img
-                        src={event.image}
-                        alt={event.title}
-                        className="w-full h-72 object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent" />
-                    <h1 className="absolute bottom-6 left-6 text-3xl font-bold text-white drop-shadow-lg">
-                        {event.title}
-                    </h1>
-                </div>
+                <EventHero event={event} />
 
-                {/* Event Info */}
-                <div className="p-8 border-b border-gray-100">
-                    <div className="flex flex-wrap gap-4 mb-4 text-gray-600">
-                        <div className="flex items-center gap-2">
-                            <CalendarDays className="w-5 h-5 text-purple-600" />
-                            <span>{event.date}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <MapPin className="w-5 h-5 text-purple-600" />
-                            <span>{event.location}</span>
-                        </div>
-                    </div>
-                    <p className="text-gray-600 leading-relaxed">{event.description}</p>
-                </div>
+                <EventDetails event={event} formatDate={formatDate} />
 
-                {/* Volunteer Form */}
-                <div className="p-8">
+                <div className="p-4 md:p-8">
                     <div className="flex items-center justify-center mb-6">
-                        <Heart className="w-8 h-8 text-purple-600 mr-2" />
-                        <h2 className="text-2xl font-semibold text-gray-800">
+                        <Heart className="w-6 h-6 md:w-8 md:h-8 text-purple-600 mr-2" />
+                        <h2 className="text-xl md:text-2xl font-semibold text-gray-800">
                             Daftar Jadi Relawan
                         </h2>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="max-w-2xl mx-auto space-y-5">
-                        <div>
-                            <label className="block text-gray-700 font-medium mb-2">
-                                Nama Lengkap
-                            </label>
-                            <input
-                                type="text"
-                                name="fullName"
-                                value={formData.fullName}
-                                onChange={handleChange}
-                                placeholder="Nama lengkap Anda"
-                                className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-purple-200 focus:border-purple-400 outline-none"
-                                required
-                            />
-                        </div>
+                    <RegistrationForm
+                        user={user}
+                        event={event}
+                        onSubmit={handleSubmit}
+                        submitting={submitting}
+                        success={success}
+                    />
 
-                        <div className="grid md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-gray-700 font-medium mb-2">
-                                    Email
-                                </label>
-                                <input
-                                    type="email"
-                                    name="email"
-                                    value={formData.email}
-                                    onChange={handleChange}
-                                    placeholder="anda@contoh.com"
-                                    className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-purple-200 focus:border-purple-400 outline-none"
-                                    required
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-gray-700 font-medium mb-2">
-                                    Nomor Telepon
-                                </label>
-                                <input
-                                    type="tel"
-                                    name="phone"
-                                    value={formData.phone}
-                                    onChange={handleChange}
-                                    placeholder="08xxxxxxxxxx"
-                                    className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-purple-200 focus:border-purple-400 outline-none"
-                                    required
-                                />
-                            </div>
-                        </div>
-
-                        <div>
-                            <label className="block text-gray-700 font-medium mb-2">
-                                Mengapa Anda ingin bergabung dengan acara ini?
-                            </label>
-                            <textarea
-                                name="reason"
-                                value={formData.reason}
-                                onChange={handleChange}
-                                rows={4}
-                                placeholder="Bagikan motivasi Anda..."
-                                className="w-full border border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-purple-200 focus:border-purple-400 outline-none resize-none"
-                                required
-                            />
-                        </div>
-
-                        <button
-                            type="submit"
-                            className="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-xl font-semibold transition text-lg"
-                        >
-                            Kirim Pendaftaran
-                        </button>
-                    </form>
-
-                    {success && (
-                        <div className="mt-8 bg-green-50 border border-green-100 rounded-xl p-4 text-center text-green-700 font-medium">
-                            ✅ Terima kasih telah bergabung! Kami akan menghubungi Anda segera dengan detail lebih lanjut.
-                        </div>
-                    )}
+                    {success && <SuccessMessage />}
                 </div>
             </div>
         </div>
