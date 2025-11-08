@@ -17,6 +17,8 @@ import ResetPassword from "./pages/ResetPassword"
 import Donate from "./pages/Donate";
 import JoinEvent from "./pages/JoinEvent";
 import Dashboard from "./pages/Dashboard";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
 
 import AdminLayout from "./pages/Admin/AdminLayout";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
@@ -105,6 +107,24 @@ function App() {
             <Route path="/campaigns" element={<Campaigns />} />
             <Route path="/campaigns/:id" element={<CampaignDetail />} />
             <Route path="/contact" element={<Contact />} />
+
+            {/* Legal Pages */}
+            <Route
+              path="/terms"
+              element={
+                <LayoutWrapper>
+                  <Terms />
+                </LayoutWrapper>
+              }
+            />
+            <Route
+              path="/privacy"
+              element={
+                <LayoutWrapper>
+                  <Privacy />
+                </LayoutWrapper>
+              }
+            />
 
             {/* Auth Routes */}
             <Route

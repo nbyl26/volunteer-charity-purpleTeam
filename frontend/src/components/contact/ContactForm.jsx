@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { Send, Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { Link } from "react-router-dom";
+
 import { API_ENDPOINTS } from "../../config/api";
 
 export default function ContactForm() {
@@ -162,9 +164,9 @@ export default function ContactForm() {
 
             <p className="text-xs text-gray-500 text-center">
                 Dengan mengirim pesan, Anda menyetujui{" "}
-                <a href="#" className="text-purple-600 hover:underline">
+                <Link to="/privacy" className="text-purple-600 hover:underline">
                     Kebijakan Privasi
-                </a>{" "}
+                </Link>{" "}
                 kami.
             </p>
         </form>
