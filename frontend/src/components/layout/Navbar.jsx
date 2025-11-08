@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../../context/AuthContext";
 import { ChevronDown, LogOut, Menu, X, LayoutDashboard, ShieldCheck } from "lucide-react";
-import logo from "../assets/logo.png";
+import logo from "../../assets/logo.png";
 
 const navLinks = [
     { name: "Beranda", path: "/" },
