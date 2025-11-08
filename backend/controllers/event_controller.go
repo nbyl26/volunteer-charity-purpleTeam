@@ -1,200 +1,226 @@
 package controllers
 
 import (
-	"time"
 	"backend/database"
 	"backend/models"
 	"backend/utils"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"gorm.io/gorm"
 )
 
 type EventInput struct {
-	Title       string    `json:"title" validate:"required,min=5"`
-	Description string    `json:"description" validate:"required"`
-	Location    string    `json:"location" validate:"required"`
-	EventDate   time.Time `json:"event_date" validate:"required"`
-	PhotoURL    string    `json:"photo_url" validate:"omitempty,url"`
-	Category    string    `json:"category" validate:"required"` 
+    Title       string `json:"title" validate:"required,min=3"`
+    Description string `json:"description" validate:"required,min=10"`
+    Location    string `json:"location" validate:"required"`
+    EventDate   string `json:"event_date" validate:"required"`
+    Category    string `json:"category" validate:"required"`
 }
-
-
-func CreateEvent(c *fiber.Ctx) error {
-	eventDateStr := c.FormValue("event_date")
-	eventDate, err := time.Parse(time.RFC3339, eventDateStr)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid event_date format. Use ISO 8601 (RFC3339).",
-		})
-	}
-
-	input := EventInput{
-		Title:       c.FormValue("title"),
-		Description: c.FormValue("description"),
-		Location:    c.FormValue("location"),
-		Category:    c.FormValue("category"),
-		EventDate:   eventDate,
-	}
-
-	if errors := utils.ValidateStruct(input); errors != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"errors": errors})
-	}
-
-	fileUrl, err := utils.SaveFile(c, "photo", "./uploads")
-	if err != nil {
-		if err == utils.ErrMissingFile {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": "Event photo (field 'photo') is required.",
-			})
-		}
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "File upload failed: " + err.Error()})
-	}
-
-	event := models.Event{
-		Title:       input.Title,
-		Description: input.Description,
-		Location:    input.Location,
-		EventDate:   input.EventDate,
-		Category:    input.Category,
-		PhotoURL:    fileUrl,
-	}
-
-	if err := database.DB.Create(&event).Error; err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
-	}
-
-	return c.Status(fiber.StatusCreated).JSON(event)
-}
-
-// func GetEvents(c *fiber.Ctx) error {
-// 	var events []models.Event
-// 	if err := database.DB.Find(&events).Error; err != nil {
-// 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
-// 	}
-// 	return c.Status(fiber.StatusOK).JSON(events)
-// }
 
 func GetEvents(c *fiber.Ctx) error {
     var events []models.Event
-    
-    if err := database.DB.
-        Preload("Registrations.User").
-        Find(&events).Error; err != nil {
+    if err := database.DB.Preload("Registrations.User").Find(&events).Error; err != nil {
         return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
     }
-    
     return c.Status(fiber.StatusOK).JSON(events)
 }
 
 func GetEventByID(c *fiber.Ctx) error {
-	id := c.Params("id")
-	var event models.Event
-
-	err := database.DB.Preload("Registrations.User").First(&event, id).Error
-	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Event not found"})
-		}
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
-	}
-
-	return c.Status(fiber.StatusOK).JSON(event)
+    id := c.Params("id")
+    var event models.Event
+    if err := database.DB.Preload("Registrations.User").First(&event, id).Error; err != nil {
+        return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Event not found"})
+    }
+    return c.Status(fiber.StatusOK).JSON(event)
 }
 
-// NEW
-func GetEventRegistrations(c *fiber.Ctx) error {
-    eventID := c.Params("id")
-    
-    var registrations []models.EventRegistration
-    
-    if err := database.DB.
-        Where("event_id = ?", eventID).
-        Preload("User").
-        Find(&registrations).Error; err != nil {
+func CreateEvent(c *fiber.Ctx) error {
+    title := c.FormValue("title")
+    description := c.FormValue("description")
+    location := c.FormValue("location")
+    category := c.FormValue("category")
+    eventDateStr := c.FormValue("event_date")
+
+    if title == "" || description == "" || location == "" || category == "" || eventDateStr == "" {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "All fields are required"})
+    }
+
+    eventDate, err := time.Parse(time.RFC3339, eventDateStr)
+    if err != nil {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+            "error": "Invalid event_date format. Use ISO 8601 (e.g., 2025-06-15T10:00:00Z)",
+        })
+    }
+
+    fileUrl, err := utils.SaveFile(c, "photo", "./uploads")
+    if err != nil {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Photo upload failed: " + err.Error()})
+    }
+
+    event := models.Event{
+        Title:       title,
+        Description: description,
+        Location:    location,
+        EventDate:   eventDate,
+        Category:    category,
+        PhotoURL:    fileUrl,
+    }
+
+    if err := database.DB.Create(&event).Error; err != nil {
         return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
     }
-    
-    return c.Status(fiber.StatusOK).JSON(registrations)
+
+    return c.Status(fiber.StatusCreated).JSON(event)
 }
 
 func UpdateEvent(c *fiber.Ctx) error {
-	id := c.Params("id")
-	var event models.Event
-	if err := database.DB.First(&event, id).Error; err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Event not found"})
-	}
+    id := c.Params("id")
+    var event models.Event
+    if err := database.DB.First(&event, id).Error; err != nil {
+        return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Event not found"})
+    }
 
-	var input EventInput
-	if err := utils.ParseAndValidate(c, &input); err != nil {
-		return err
-	}
+    title := c.FormValue("title")
+    description := c.FormValue("description")
+    location := c.FormValue("location")
+    category := c.FormValue("category")
+    eventDateStr := c.FormValue("event_date")
 
-	database.DB.Model(&event).Updates(input)
-	return c.Status(fiber.StatusOK).JSON(event)
+    if title == "" || description == "" || location == "" || category == "" || eventDateStr == "" {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "All fields are required"})
+    }
+
+    eventDate, err := time.Parse(time.RFC3339, eventDateStr)
+    if err != nil {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+            "error": "Invalid event_date format. Use ISO 8601 (e.g., 2025-06-15T10:00:00Z)",
+        })
+    }
+
+    event.Title = title
+    event.Description = description
+    event.Location = location
+    event.EventDate = eventDate
+    event.Category = category
+
+    fileUrl, err := utils.SaveFile(c, "photo", "./uploads")
+    if err == nil {
+        event.PhotoURL = fileUrl
+    }
+
+    if err := database.DB.Save(&event).Error; err != nil {
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+    }
+
+    return c.Status(fiber.StatusOK).JSON(event)
 }
 
 func DeleteEvent(c *fiber.Ctx) error {
-	id := c.Params("id")
-	result := database.DB.Delete(&models.Event{}, id)
+    id := c.Params("id")
+    var event models.Event
+    if err := database.DB.First(&event, id).Error; err != nil {
+        return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Event not found"})
+    }
 
-	if result.Error != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": result.Error.Error()})
-	}
-	if result.RowsAffected == 0 {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Event not found"})
-	}
+    if err := database.DB.Delete(&event).Error; err != nil {
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+    }
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "Event deleted successfully"})
+    return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "Event deleted successfully"})
 }
 
-
 func JoinEvent(c *fiber.Ctx) error {
-	userID := uint(c.Locals("userID").(float64))
-	eventID := c.Params("id")
+    userID := uint(c.Locals("userID").(float64))
+    eventID := c.Params("id")
 
-	var event models.Event
-	if err := database.DB.First(&event, eventID).Error; err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Event not found"})
-	}
-	
-	var existingReg models.EventRegistration
-	err := database.DB.Where("user_id = ? AND event_id = ?", userID, eventID).First(&existingReg).Error
-	if err == nil {
-		return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "You are already registered for this event"})
-	}
+    var event models.Event
+    if err := database.DB.First(&event, eventID).Error; err != nil {
+        return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Event not found"})
+    }
 
-	registration := models.EventRegistration{
-		UserID:  userID,
-		EventID: event.ID,
-		Status:  models.RegStatusPending,
-	}
+    var existing models.EventRegistration
+    err := database.DB.Where("user_id = ? AND event_id = ?", userID, eventID).First(&existing).Error
+    if err == nil {
+        return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "You have already registered for this event"})
+    }
 
-	if err := database.DB.Create(&registration).Error; err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
-	}
-	
-	var createdReg models.EventRegistration
-	if err := database.DB.Preload("User").Preload("Event").First(&createdReg, registration.ID).Error; err != nil {
-		return c.Status(fiber.StatusCreated).JSON(registration)
-	}
-	
-	return c.Status(fiber.StatusCreated).JSON(createdReg)
+    registration := models.EventRegistration{
+        UserID:  userID,
+        EventID: event.ID,
+        Status:  models.RegStatusPending,
+    }
+
+    if err := database.DB.Create(&registration).Error; err != nil {
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+    }
+
+    return c.Status(fiber.StatusCreated).JSON(registration)
+}
+
+func GetEventRegistrations(c *fiber.Ctx) error {
+    eventID := c.Params("id")
+
+    var registrations []models.EventRegistration
+    if err := database.DB.Where("event_id = ?", eventID).Preload("User").Find(&registrations).Error; err != nil {
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+    }
+
+    return c.Status(fiber.StatusOK).JSON(registrations)
 }
 
 func ApproveVolunteer(c *fiber.Ctx) error {
-	volunteerID := c.Params("volunteerId")
-	regID := c.Params("regId")
+    volunteerID := c.Params("volunteerId")
+    regID := c.Params("regId")
 
-	var registration models.EventRegistration
-	err := database.DB.Where("id = ? AND user_id = ?", regID, volunteerID).First(&registration).Error
-	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Registration not found"})
-	}
-	
-	if err := database.DB.Model(&registration).Update("status", models.RegStatusApproved).Error; err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
-	}
+    var registration models.EventRegistration
+    err := database.DB.Where("id = ? AND user_id = ?", regID, volunteerID).First(&registration).Error
+    if err != nil {
+        return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Registration not found"})
+    }
 
-	return c.Status(fiber.StatusOK).JSON(registration)
+    if err := database.DB.Model(&registration).Update("status", models.RegStatusApproved).Error; err != nil {
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+    }
+
+    return c.Status(fiber.StatusOK).JSON(registration)
+}
+
+func RejectVolunteer(c *fiber.Ctx) error {
+    volunteerID := c.Params("volunteerId")
+    regID := c.Params("regId")
+
+    var registration models.EventRegistration
+    err := database.DB.Where("id = ? AND user_id = ?", regID, volunteerID).First(&registration).Error
+    if err != nil {
+        return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Registration not found"})
+    }
+
+    if err := database.DB.Model(&registration).Update("status", models.RegStatusRejected).Error; err != nil {
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+    }
+
+    return c.Status(fiber.StatusOK).JSON(registration)
+}
+
+func UpdateRegistrationStatus(c *fiber.Ctx) error {
+    regID := c.Params("regId")
+
+    var input struct {
+        Status models.RegistrationStatus `json:"status" validate:"required,oneof=pending approved rejected selesai"`
+    }
+
+    if err := utils.ParseAndValidate(c, &input); err != nil {
+        return err
+    }
+
+    var registration models.EventRegistration
+    if err := database.DB.First(&registration, regID).Error; err != nil {
+        return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Registration not found"})
+    }
+
+    if err := database.DB.Model(&registration).Update("status", input.Status).Error; err != nil {
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+    }
+
+    return c.Status(fiber.StatusOK).JSON(registration)
 }
