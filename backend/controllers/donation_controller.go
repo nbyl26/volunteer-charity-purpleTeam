@@ -27,7 +27,7 @@ type DonationResponse struct {
     ID             uint                  `json:"id"`
     Amount         float64               `json:"amount"`
     ProofOfPayment string                `json:"proof_of_payment"`
-    Message        string                `json:"message"` 
+    Message        string                `json:"message"`
     Status         models.DonationStatus `json:"status"`
     CreatedAt      time.Time             `json:"created_at"`
     User           SimpleUserResponse    `json:"user"`
