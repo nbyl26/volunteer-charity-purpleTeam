@@ -130,31 +130,36 @@ func DeleteEvent(c *fiber.Ctx) error {
 }
 
 func JoinEvent(c *fiber.Ctx) error {
-    userID := uint(c.Locals("userID").(float64))
-    eventID := c.Params("id")
+	userID := uint(c.Locals("userID").(float64))
+	eventID := c.Params("id")
 
-    var event models.Event
-    if err := database.DB.First(&event, eventID).Error; err != nil {
-        return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Event not found"})
-    }
+	var event models.Event
+	if err := database.DB.First(&event, eventID).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Event not found"})
+	}
 
-    var existing models.EventRegistration
-    err := database.DB.Where("user_id = ? AND event_id = ?", userID, eventID).First(&existing).Error
-    if err == nil {
-        return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "You have already registered for this event"})
-    }
+	var existing models.EventRegistration
+	err := database.DB.Where("user_id = ? AND event_id = ?", userID, eventID).First(&existing).Error
+	if err == nil {
+		return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "You have already registered for this event"})
+	}
 
-    registration := models.EventRegistration{
-        UserID:  userID,
-        EventID: event.ID,
-        Status:  models.RegStatusPending,
-    }
+	registration := models.EventRegistration{
+		UserID:  userID,
+		EventID: event.ID,
+		Status:  models.RegStatusPending,
+	}
 
-    if err := database.DB.Create(&registration).Error; err != nil {
-        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
-    }
+	if err := database.DB.Create(&registration).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
 
-    return c.Status(fiber.StatusCreated).JSON(registration)
+	var createdRegistration models.EventRegistration
+	if err := database.DB.Preload("User").Preload("Event").First(&createdRegistration, registration.ID).Error; err != nil {
+		return c.Status(fiber.StatusCreated).JSON(registration)
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(createdRegistration)
 }
 
 func GetEventRegistrations(c *fiber.Ctx) error {
@@ -169,58 +174,70 @@ func GetEventRegistrations(c *fiber.Ctx) error {
 }
 
 func ApproveVolunteer(c *fiber.Ctx) error {
-    volunteerID := c.Params("volunteerId")
-    regID := c.Params("regId")
+	volunteerID := c.Params("volunteerId")
+	regID := c.Params("regId")
 
-    var registration models.EventRegistration
-    err := database.DB.Where("id = ? AND user_id = ?", regID, volunteerID).First(&registration).Error
-    if err != nil {
-        return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Registration not found"})
-    }
+	var registration models.EventRegistration
+	err := database.DB.Where("id = ? AND user_id = ?", regID, volunteerID).First(&registration).Error
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Registration not found"})
+	}
 
-    if err := database.DB.Model(&registration).Update("status", models.RegStatusApproved).Error; err != nil {
-        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
-    }
+	if err := database.DB.Model(&registration).Update("status", models.RegStatusApproved).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
 
-    return c.Status(fiber.StatusOK).JSON(registration)
+	if err := database.DB.Preload("User").Preload("Event").First(&registration, regID).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to fetch updated registration"})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(registration)
 }
 
 func RejectVolunteer(c *fiber.Ctx) error {
-    volunteerID := c.Params("volunteerId")
-    regID := c.Params("regId")
+	volunteerID := c.Params("volunteerId")
+	regID := c.Params("regId")
 
-    var registration models.EventRegistration
-    err := database.DB.Where("id = ? AND user_id = ?", regID, volunteerID).First(&registration).Error
-    if err != nil {
-        return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Registration not found"})
-    }
+	var registration models.EventRegistration
+	err := database.DB.Where("id = ? AND user_id = ?", regID, volunteerID).First(&registration).Error
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Registration not found"})
+	}
 
-    if err := database.DB.Model(&registration).Update("status", models.RegStatusRejected).Error; err != nil {
-        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
-    }
+	if err := database.DB.Model(&registration).Update("status", models.RegStatusRejected).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
 
-    return c.Status(fiber.StatusOK).JSON(registration)
+	if err := database.DB.Preload("User").Preload("Event").First(&registration, regID).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to fetch updated registration"})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(registration)
 }
 
 func UpdateRegistrationStatus(c *fiber.Ctx) error {
-    regID := c.Params("regId")
+	regID := c.Params("regId")
 
-    var input struct {
-        Status models.RegistrationStatus `json:"status" validate:"required,oneof=pending approved rejected selesai"`
-    }
+	var input struct {
+		Status models.RegistrationStatus `json:"status" validate:"required,oneof=pending approved rejected selesai"`
+	}
 
-    if err := utils.ParseAndValidate(c, &input); err != nil {
-        return err
-    }
+	if err := utils.ParseAndValidate(c, &input); err != nil {
+		return err
+	}
 
-    var registration models.EventRegistration
-    if err := database.DB.First(&registration, regID).Error; err != nil {
-        return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Registration not found"})
-    }
+	var registration models.EventRegistration
+	if err := database.DB.First(&registration, regID).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Registration not found"})
+	}
 
-    if err := database.DB.Model(&registration).Update("status", input.Status).Error; err != nil {
-        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
-    }
+	if err := database.DB.Model(&registration).Update("status", input.Status).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
 
-    return c.Status(fiber.StatusOK).JSON(registration)
+	if err := database.DB.Preload("User").Preload("Event").First(&registration, regID).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to fetch updated registration"})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(registration)
 }
