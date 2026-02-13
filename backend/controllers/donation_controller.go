@@ -160,4 +160,4 @@ func VerifyDonation(c *fiber.Ctx) error {
     }
 
     return c.Status(fiber.StatusOK).JSON(donation)
-}}
+}

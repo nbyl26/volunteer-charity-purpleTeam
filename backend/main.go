@@ -13,34 +13,33 @@ import (
 )
 
 func main() {
-	database.InitDB()
+    config.LoadConfig()
+    database.InitDB()
+    database.MigrateDB(database.DB)
+    
+    cfg := config.GetConfig()
 
-	database.MigrateDB(database.DB)
+    app := fiber.New()
 
-	config.LoadConfig()
-	cfg := config.GetConfig()
+    app.Use(logger.New())
+    app.Use(cors.New(cors.Config{
+        AllowOrigins:     "http://localhost:5173",
+        AllowMethods:     "GET,POST,PUT,PATCH,DELETE,OPTIONS",
+        AllowHeaders:     "Origin, Content-Type, Accept, Authorization",
+        ExposeHeaders:    "Set-Cookie",
+        AllowCredentials: true,
+    }))
 
-	app := fiber.New()
+    app.Static("/files", "./uploads")
 
-	app.Use(logger.New())
-	app.Use(cors.New(cors.Config{
-		AllowOrigins:     "http://localhost:5173", 
-		AllowMethods:     "GET,POST,PUT,PATCH,DELETE,OPTIONS",
-		AllowHeaders:     "Origin, Content-Type, Accept, Authorization",
-		ExposeHeaders:    "Set-Cookie",
-		AllowCredentials: true, 
-	}))
+    routes.SetupRoutes(app, database.DB)
 
-	app.Static("/files", "./uploads")
+    app.Use(func(c *fiber.Ctx) error {
+        return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+            "error": "Route not found",
+        })
+    })
 
-	routes.SetupRoutes(app, database.DB)
-
-	app.Use(func(c *fiber.Ctx) error {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": "Route not found",
-		})
-	})
-
-	log.Println("🚀 Starting server on port:", cfg.Port)
-	log.Fatal(app.Listen(":" + cfg.Port))
+    log.Printf("🚀 Server starting on http://localhost:%s\n", cfg.Port)
+    log.Fatal(app.Listen(":" + cfg.Port))
 }

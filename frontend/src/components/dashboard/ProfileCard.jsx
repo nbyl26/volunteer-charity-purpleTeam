@@ -20,9 +20,6 @@ export default function ProfileCard({ profile, user }) {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 md:p-6">
             <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold text-gray-900">Informasi Profil</h2>
-                <button className="p-2 hover:bg-gray-100 rounded-lg transition">
-                    <Settings className="w-4 h-4 text-gray-600" />
-                </button>
             </div>
 
             <div className="space-y-4">
